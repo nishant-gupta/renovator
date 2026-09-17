@@ -1,0 +1,27 @@
+name: Conversation eval (manual)
+
+# Not run on push/PR — it makes real Anthropic API calls and costs money.
+# Trigger it by hand (Actions tab -> Conversation eval -> Run workflow)
+# once ANTHROPIC_API_KEY is added as a repo secret (Settings -> Secrets and
+# variables -> Actions).
+on:
+  workflow_dispatch:
+
+jobs:
+  eval:
+    name: Golden conversation-eval suite
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync
+      - name: Run eval suite
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run python scripts/eval_conversations.py
