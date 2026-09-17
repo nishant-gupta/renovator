@@ -130,7 +130,10 @@ The plan document is the single source of truth. Both the chat and the tab UI re
 The static app's `state` object (`Renovation_Planner_v2.html`) becomes a Pydantic schema:
 
 ```
-ProjectSettings: project_start (date), work_weekends (bool), sequence_stages (bool)
+ProjectSettings: project_start (date), weekend_policy (none|saturdays|all), sequence_stages (bool),
+                 blocked_dates: [date]  # weekend_policy replaced a plain work_weekends bool
+                                        # post-Phase-9 (saturdays/blocked_dates have no
+                                        # reference-app equivalent — both are new)
 Room:  id, label
 Rate:  key, label, unit, value
 Phase: id, label                      # order in list = priority order
@@ -150,7 +153,7 @@ A **Task** (what the UI shows as one row) is a derived grouping of 1–2 `TaskLi
 
 Port these functions from JS to Python **verbatim in logic**, not "as an LLM approximation":
 
-- `computeSchedule()` — forward pass: project start → stage cascade (if `sequence_stages`) → dependency finishes → `start_override` pin → working-day duration (skipping weekends unless `work_weekends`) → end date.
+- `computeSchedule()` — forward pass: project start → stage cascade (if `sequence_stages`) → dependency finishes → `start_override` pin → working-day duration (skipping non-workdays per `weekend_policy` and `blocked_dates`) → end date.
 - `wouldCreateCycle()` — dependency cycle guard, must reject before save, same as the modal in feature.md §4.1.
 - `suggestedOrder()` — dependency-aware, stage-ordered topological sort.
 - Cost helpers — `item_cost` (rate×qty or flat amount), `grand_total`, and the by-room/by-trade/by-phase/mandatory-optional/materials breakdowns for Estimate.
@@ -322,6 +325,15 @@ The plan-change stream is `GET /projects/{id}/plan-events` — deliberately simp
 **LangSmith tracing** — `.env.example` documents `LANGSMITH_TRACING`/`LANGSMITH_API_KEY`/`LANGSMITH_PROJECT`; LangChain reads these itself, so enabling tracing needs no code change. No account was available to verify actual trace capture in this session — that's on whoever adds a real key.
 
 **Local cost/latency dashboard** — since LangSmith couldn't be verified end-to-end, a second, fully self-verifiable path: every `/chat` turn now emits a `usage` event (input/output tokens, wall-clock duration, a rough estimated cost from `agents/pricing.py`'s public list prices) and persists it to a new `usage_log` table (`store/plan_store.py`); `GET /projects/{id}/usage` aggregates it, and `ChatPanel`'s header shows a running cumulative token count. A real, load-bearing limitation was found live rather than assumed: a delegated sub-agent call (`task` tool, `subagents.py::SUBAGENT_MODEL`) runs as its own nested sub-graph — its internal `AIMessage`s (and their `usage_metadata`) never appear in the parent thread's top-level `messages` state, only the tool's final result does. So this dashboard currently undercounts turns that delegate — it only ever captured the main agent's own token usage in testing, confirmed by checking `by_model` after a turn that visibly delegated to `intake`. Documented rather than fixed: capturing sub-agent usage would need `stream_mode`'s `subgraphs=True` (a real refactor of the streaming loop, with its own per-namespace "already seen" tracking), out of scope for what's meant to be a basic dashboard — LangSmith tracing does see sub-agent calls, once configured.
+
+**Scheduling realism follow-up (post-Phase 9)** ✅ done
+Triggered by a real user report: scheduling a small bathroom reno via chat produced a 17+ day schedule. Live reproduction (not guessed at) found the actual cause: the agent spread 8 tasks across 7 distinct stages, and under `sequence_stages` (on by default) every distinct stage used is a hard serialization boundary — nothing in a later stage starts until *everything* in every earlier stage is fully done, plus a buffer day. This is realistic trade-sequencing, not a bug, but the agent was needlessly pessimistic about how many stages a small job actually needs.
+
+**Prompt fix, measured, not assumed.** `subagents.py`'s `intake` and the main system prompt (`prompts.py`) now explicitly warn that each stage used is a hard serialization boundary and instruct: only separate two tasks into different stages when the trade order between them is a *genuine* constraint, otherwise keep them in the same stage. Re-ran the identical bathroom scenario live afterward: 7 stages → 5, 22 calendar days → 15 — a real, measured ~32% reduction, not just a plausible-sounding prompt tweak.
+
+**Two new scheduling levers, both requested directly.** `domain/models.py::WeekendPolicy` (`none`/`saturdays`/`all`) replaces the old `work_weekends: bool` — `saturdays` is new, no reference-app equivalent (the static app only ever had on/off). `ProjectSettings.blocked_dates: list[str]` marks specific dates as no-work regardless of weekday (holidays, a contractor's planned day off) — also new. `engine/schedule.py`'s `is_workday`/`next_workday`/`add_working_days` now take `weekend_policy` + `blocked_dates` instead of a bare bool; golden-fixture parity (NONE/ALL, the only two the reference app ever had) re-verified unchanged, plus new direct engine tests for SATURDAYS and blocked-date skipping (no fixture exists for either — genuinely new capability). A `model_validator(mode="before")` on `ProjectSettings` migrates any plan persisted before this change (`work_weekends: bool` in its stored JSON) to the new field automatically on load — verified against both direct construction and a raw legacy JSON string, so no manual data migration was needed for existing `~/.renovator/*.db` files. `store/global_settings.py` got the identical tri-state + blocked-dates treatment (with its own legacy-JSON migration), and Excel export/import gained a "Weekend work" (Yes/No/"Saturdays only") + "Blocked dates" row in the Project sheet, with legacy-workbook import still accepted.
+
+New tools `add_blocked_date`/`remove_blocked_date` and `set_project_settings`'s renamed `weekend_policy` param are chat-reachable — live-verified: asking the agent to "work Saturdays too but not Sundays, and block 2026-09-25" correctly set both in one turn. Frontend: `ScheduleTab.tsx` replaced its "Work weekends" checkbox with a `Menu`-driven 3-way toggle for quick access next to the Gantt/agenda views; `ProjectEditor.tsx` and `ProjectsTab.tsx` (project-level and global-default settings, respectively) each got a `<select>` for the tri-state plus a blocked-dates add/remove list. `AgendaView.tsx` now filters days via a new `dates.ts::isWorkday()` (a direct port of the engine's day-off logic) instead of a bare weekend check, so it correctly hides Saturdays under `saturdays`/`all` policy and skips blocked dates too. Not done: Gantt/Board views don't visually distinguish a blocked date from an ordinary workday (they still only shade calendar weekends) — a cosmetic gap, not a scheduling-correctness one, noted rather than fixed given scope.
 
 **Phase 10 — Packaging**
 Local-run packaging (script/installer to launch backend + frontend together), key entry UX (first-run prompt vs. `.env`), and a migration path for anyone with an exported `.xlsx` from the reference app to import into a new project.

@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { api, ApiError } from "../api/client";
 import { useFetch } from "../api/hooks";
 import { ProjectEditor } from "../components/ProjectEditor";
-import type { ProjectSummary } from "../api/types";
+import type { ProjectSummary, WeekendPolicy } from "../api/types";
 
 interface ProjectsTabProps {
   projects: ProjectSummary[];
@@ -56,13 +56,18 @@ export function ProjectsTab({ projects, activeProjectId, onOpen, onProjectsChang
           </span>
         </div>
         <div className="frow">
-          <label className="field field-checkbox">
-            <input
-              type="checkbox"
-              checked={globalSettings.work_weekends}
-              onChange={(e) => runGlobal(() => api.updateGlobalSettings({ work_weekends: e.target.checked }))}
-            />
-            <span>Work on weekends too</span>
+          <label className="field">
+            <span>Weekend work</span>
+            <select
+              value={globalSettings.weekend_policy}
+              onChange={(e) =>
+                runGlobal(() => api.updateGlobalSettings({ weekend_policy: e.target.value as WeekendPolicy }))
+              }
+            >
+              <option value="none">Weekdays only</option>
+              <option value="saturdays">+ Saturdays</option>
+              <option value="all">Every day</option>
+            </select>
           </label>
           <label className="field field-checkbox">
             <input
@@ -73,6 +78,35 @@ export function ProjectsTab({ projects, activeProjectId, onOpen, onProjectsChang
             <span>Run stages in order</span>
           </label>
         </div>
+
+        <div className="modal-section">Default blocked dates</div>
+        <div className="tag-list">
+          {globalSettings.blocked_dates.length === 0 && <span className="muted">None yet.</span>}
+          {globalSettings.blocked_dates.map((date) => (
+            <span key={date} className="tag tag-muted">
+              {date}
+              <button
+                type="button"
+                className="tag-remove"
+                title="Unblock this date"
+                onClick={() => runGlobal(() => api.removeGlobalBlockedDate(date))}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+        <label className="field field-wide">
+          <span>Add a default blocked date (holiday, planned day off)</span>
+          <input
+            type="date"
+            value=""
+            onChange={(e) => {
+              if (e.target.value) runGlobal(() => api.addGlobalBlockedDate(e.target.value));
+              e.target.value = "";
+            }}
+          />
+        </label>
 
         <div className="modal-section">Default rate card</div>
         <table className="dt">

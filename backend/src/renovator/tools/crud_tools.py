@@ -19,6 +19,7 @@ convenience that doesn't belong in a data-mutation API:
 
 from __future__ import annotations
 
+import datetime
 from typing import Literal
 
 from pydantic import BaseModel
@@ -33,6 +34,7 @@ from renovator.domain.models import (
     Stage,
     TaskLine,
     TaskStatus,
+    WeekendPolicy,
     new_id,
 )
 from renovator.engine.dependencies import would_create_cycle
@@ -224,15 +226,41 @@ def move_stage(plan: Plan, index: int, direction: Literal[-1, 1]) -> Plan:
 def set_project_settings(
     plan: Plan,
     project_start: str | None = None,
-    work_weekends: bool | None = None,
+    weekend_policy: WeekendPolicy | str | None = None,
     sequence_stages: bool | None = None,
 ) -> Plan:
     if project_start is not None:
         plan.settings.project_start = project_start
-    if work_weekends is not None:
-        plan.settings.work_weekends = work_weekends
+    if weekend_policy is not None:
+        try:
+            plan.settings.weekend_policy = WeekendPolicy(weekend_policy)
+        except ValueError as e:
+            raise ValidationError(
+                f"Invalid weekend_policy: {weekend_policy!r} (must be one of "
+                f"{[p.value for p in WeekendPolicy]})"
+            ) from e
     if sequence_stages is not None:
         plan.settings.sequence_stages = sequence_stages
+    return plan
+
+
+def add_blocked_date(plan: Plan, date: str) -> Plan:
+    """Marks one ISO yyyy-mm-dd date as no-work-allowed (a holiday, a
+    contractor's day off) regardless of weekday. No reference-app
+    equivalent — new in Phase 9's scheduling follow-up."""
+    try:
+        datetime.date.fromisoformat(date)
+    except ValueError as e:
+        raise ValidationError(f"Invalid date (expected yyyy-mm-dd): {date!r}") from e
+    if date not in plan.settings.blocked_dates:
+        plan.settings.blocked_dates = sorted([*plan.settings.blocked_dates, date])
+    return plan
+
+
+def remove_blocked_date(plan: Plan, date: str) -> Plan:
+    if date not in plan.settings.blocked_dates:
+        raise ValidationError(f"No such blocked date: {date}")
+    plan.settings.blocked_dates = [d for d in plan.settings.blocked_dates if d != date]
     return plan
 
 

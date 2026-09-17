@@ -18,8 +18,9 @@ reference app exactly:
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 def new_id(prefix: str) -> str:
@@ -52,10 +53,35 @@ class TaskStatus(str, Enum):
     DONE = "Done"
 
 
+class WeekendPolicy(str, Enum):
+    """Which weekend days count as workdays for schedule computation
+    (engine/schedule.py). No reference-app equivalent — the static app only
+    ever had a work_weekends on/off toggle (§4.4); SATURDAYS is new."""
+
+    NONE = "none"  # weekdays only
+    SATURDAYS = "saturdays"  # Saturday is a workday, Sunday isn't
+    ALL = "all"  # every day is a workday
+
+
 class ProjectSettings(BaseModel):
     project_start: str  # ISO yyyy-mm-dd
-    work_weekends: bool = False
+    weekend_policy: WeekendPolicy = WeekendPolicy.NONE
     sequence_stages: bool = True
+    # ISO yyyy-mm-dd dates with no work allowed regardless of weekday
+    # (public holidays, a contractor's planned days off, etc.).
+    blocked_dates: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_legacy_work_weekends(cls, data: Any) -> Any:
+        """A plan persisted before weekend_policy existed has a
+        `work_weekends: bool` instead — map True/False to ALL/NONE so old
+        SQLite snapshots (§4.7) keep loading correctly rather than needing
+        a manual migration script."""
+        if isinstance(data, dict) and "weekend_policy" not in data and "work_weekends" in data:
+            data = dict(data)
+            data["weekend_policy"] = WeekendPolicy.ALL if data.pop("work_weekends") else WeekendPolicy.NONE
+        return data
 
 
 class Rate(BaseModel):

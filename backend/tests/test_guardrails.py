@@ -49,6 +49,8 @@ _EXPECTED_TOOL_NAMES = {
     "remove_stage",
     "move_stage",
     "set_project_settings",
+    "add_blocked_date",
+    "remove_blocked_date",
     "instantiate_template",
     "create_task",
     "update_task",

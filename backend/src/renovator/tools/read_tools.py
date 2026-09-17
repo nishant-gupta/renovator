@@ -26,8 +26,9 @@ def get_setup(plan: Plan) -> dict:
         "phases": [{"id": p.id, "label": p.label} for p in plan.phases],
         "stages": [{"id": s.id, "label": s.label} for s in plan.stages],
         "project_start": plan.settings.project_start,
-        "work_weekends": plan.settings.work_weekends,
+        "weekend_policy": plan.settings.weekend_policy.value,
         "sequence_stages": plan.settings.sequence_stages,
+        "blocked_dates": list(plan.settings.blocked_dates),
     }
 
 

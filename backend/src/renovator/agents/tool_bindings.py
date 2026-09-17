@@ -271,18 +271,48 @@ def build_tools(session: PlanSession) -> list[BaseTool]:
     @tool
     def set_project_settings(
         project_start: str | None = None,
-        work_weekends: bool | None = None,
+        weekend_policy: str | None = None,
         sequence_stages: bool | None = None,
     ) -> dict:
-        """Update project timing: start date (YYYY-MM-DD), whether the crew
-        works weekends, and whether stages run in strict trade order."""
-        ct.set_project_settings(
-            session.plan,
-            project_start=project_start,
-            work_weekends=work_weekends,
-            sequence_stages=sequence_stages,
+        """Update project timing: start date (YYYY-MM-DD), whether stages
+        run in strict trade order, and weekend_policy — one of "none" (crew
+        doesn't work weekends), "saturdays" (Saturday is a workday, Sunday
+        isn't), or "all" (every day is a workday)."""
+        try:
+            ct.set_project_settings(
+                session.plan,
+                project_start=project_start,
+                weekend_policy=weekend_policy,
+                sequence_stages=sequence_stages,
+            )
+        except ValidationError as e:
+            return _err(e)
+        session.persist(
+            "set_project_settings",
+            f"start={project_start} weekend_policy={weekend_policy} sequence={sequence_stages}",
         )
-        session.persist("set_project_settings", f"start={project_start} weekends={work_weekends} sequence={sequence_stages}")
+        return {"ok": True}
+
+    @tool
+    def add_blocked_date(date: str) -> dict:
+        """Mark one date (YYYY-MM-DD) as no-work-allowed — a holiday, a
+        contractor's planned day off — regardless of weekday. Every task
+        scheduled on or after that date shifts to skip it."""
+        try:
+            ct.add_blocked_date(session.plan, date)
+        except ValidationError as e:
+            return _err(e)
+        session.persist("add_blocked_date", f"Blocked {date}")
+        return {"ok": True}
+
+    @tool
+    def remove_blocked_date(date: str) -> dict:
+        """Un-block a previously blocked date (YYYY-MM-DD)."""
+        try:
+            ct.remove_blocked_date(session.plan, date)
+        except ValidationError as e:
+            return _err(e)
+        session.persist("remove_blocked_date", f"Unblocked {date}")
         return {"ok": True}
 
     # ---- task mutations -----------------------------------------------------
@@ -441,6 +471,8 @@ def build_tools(session: PlanSession) -> list[BaseTool]:
         remove_stage,
         move_stage,
         set_project_settings,
+        add_blocked_date,
+        remove_blocked_date,
         create_task,
         update_task,
         delete_task,

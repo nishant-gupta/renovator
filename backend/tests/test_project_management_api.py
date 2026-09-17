@@ -106,13 +106,28 @@ def test_transfer_requires_a_target(client):
 def test_global_settings_defaults_and_patch(client):
     resp = client.get("/settings/global")
     assert resp.status_code == 200
-    assert resp.json() == {"work_weekends": False, "sequence_stages": True, "rates": []}
+    assert resp.json() == {"weekend_policy": "none", "sequence_stages": True, "rates": [], "blocked_dates": []}
 
-    resp = client.patch("/settings/global", json={"work_weekends": True})
+    resp = client.patch("/settings/global", json={"weekend_policy": "all"})
     assert resp.status_code == 200
     body = resp.json()
-    assert body["work_weekends"] is True
+    assert body["weekend_policy"] == "all"
     assert body["sequence_stages"] is True  # untouched by the partial patch
+
+
+def test_global_settings_patch_rejects_invalid_weekend_policy(client):
+    resp = client.patch("/settings/global", json={"weekend_policy": "whenever"})
+    assert resp.status_code == 400
+
+
+def test_global_blocked_dates_add_and_remove(client):
+    resp = client.post("/settings/global/blocked-dates", json={"date": "2027-01-01"})
+    assert resp.status_code == 200
+    assert resp.json()["blocked_dates"] == ["2027-01-01"]
+
+    resp = client.delete("/settings/global/blocked-dates/2027-01-01")
+    assert resp.status_code == 200
+    assert resp.json()["blocked_dates"] == []
 
 
 def test_global_rate_crud(client):
@@ -130,14 +145,14 @@ def test_global_rate_crud(client):
 
 
 def test_new_project_is_seeded_from_global_defaults(client):
-    client.patch("/settings/global", json={"work_weekends": True})
+    client.patch("/settings/global", json={"weekend_policy": "all"})
     client.post("/settings/global/rates", json={"label": "Paint", "unit": "sqft", "value": 12})
 
     create_resp = client.post("/projects", json={"name": "Seeded"})
     project_id = create_resp.json()["id"]
 
     setup = client.get(f"/projects/{project_id}/setup").json()
-    assert setup["work_weekends"] is True
+    assert setup["weekend_policy"] == "all"
     assert len(setup["rates"]) == 1
     assert setup["rates"][0]["label"] == "Paint"
 

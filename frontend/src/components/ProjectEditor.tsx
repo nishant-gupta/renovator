@@ -3,7 +3,7 @@ import { api, ApiError } from "../api/client";
 import { useFetch } from "../api/hooks";
 import { withConfirmRetry } from "../confirm";
 import { Modal } from "./Modal";
-import type { ProjectSummary, Setup } from "../api/types";
+import type { ProjectSummary, Setup, WeekendPolicy } from "../api/types";
 
 interface ProjectEditorProps {
   /** null => creating a new project; once created, the caller re-renders
@@ -161,13 +161,18 @@ export function ProjectEditor({ project, onClose, onCreated, onChanged, onDelete
                 onChange={(e) => run(() => api.updateSettings(project.id, { project_start: e.target.value }))}
               />
             </label>
-            <label className="field field-checkbox">
-              <input
-                type="checkbox"
-                checked={setup.work_weekends}
-                onChange={(e) => run(() => api.updateSettings(project.id, { work_weekends: e.target.checked }))}
-              />
-              <span>Work on weekends too</span>
+            <label className="field">
+              <span>Weekend work</span>
+              <select
+                value={setup.weekend_policy}
+                onChange={(e) =>
+                  run(() => api.updateSettings(project.id, { weekend_policy: e.target.value as WeekendPolicy }))
+                }
+              >
+                <option value="none">Weekdays only</option>
+                <option value="saturdays">+ Saturdays</option>
+                <option value="all">Every day</option>
+              </select>
             </label>
             <label className="field field-checkbox">
               <input
@@ -178,6 +183,35 @@ export function ProjectEditor({ project, onClose, onCreated, onChanged, onDelete
               <span>Run stages in order</span>
             </label>
           </div>
+
+          <div className="modal-section">Blocked dates — no work allowed</div>
+          <div className="tag-list">
+            {setup.blocked_dates.length === 0 && <span className="muted">None yet.</span>}
+            {setup.blocked_dates.map((date) => (
+              <span key={date} className="tag tag-muted">
+                {date}
+                <button
+                  type="button"
+                  className="tag-remove"
+                  title="Unblock this date"
+                  onClick={() => run(() => api.removeBlockedDate(project.id, date))}
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+          </div>
+          <label className="field field-wide">
+            <span>Add a blocked date (holiday, planned day off)</span>
+            <input
+              type="date"
+              value=""
+              onChange={(e) => {
+                if (e.target.value) run(() => api.addBlockedDate(project.id, e.target.value));
+                e.target.value = "";
+              }}
+            />
+          </label>
 
           <div className="modal-section">Rate card</div>
           <table className="dt">

@@ -49,7 +49,7 @@ def test_create_project_materializes_an_empty_plan():
 
 
 def test_create_project_seeds_from_current_global_defaults():
-    gs.update_global_settings({"work_weekends": True, "sequence_stages": False})
+    gs.update_global_settings({"weekend_policy": "all", "sequence_stages": False})
     gs.add_global_rate("Paint", "sqft", 12)
 
     entry = reg.create_project("Seeded Reno")
@@ -57,7 +57,7 @@ def test_create_project_seeds_from_current_global_defaults():
 
     plan = PlanStore(entry["id"]).load()
     assert plan is not None
-    assert plan.settings.work_weekends is True
+    assert plan.settings.weekend_policy.value == "all"
     assert plan.settings.sequence_stages is False
     assert len(plan.rates) == 1
     assert plan.rates[0].label == "Paint"

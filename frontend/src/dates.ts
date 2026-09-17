@@ -32,6 +32,18 @@ export function isWeekend(d: Date): boolean {
   return g === 0 || g === 6;
 }
 
+export type WeekendPolicy = "none" | "saturdays" | "all";
+
+/** Mirrors the backend's is_workday (engine/schedule.py) — a day off under
+ * the project's weekend_policy, or an explicitly blocked_dates entry. */
+export function isWorkday(d: Date, weekendPolicy: WeekendPolicy, blockedDates: ReadonlySet<string> = new Set()): boolean {
+  if (blockedDates.has(isoDate(d))) return false;
+  const day = d.getDay(); // 0=Sun ... 6=Sat
+  if (weekendPolicy === "all") return true;
+  if (weekendPolicy === "saturdays") return day !== 0; // only Sunday is off
+  return day !== 0 && day !== 6; // "none": both weekend days are off
+}
+
 export function fmtDayLabel(d: Date): string {
   return `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
 }

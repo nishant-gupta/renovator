@@ -97,12 +97,27 @@ def test_stage_reorder(client):
 
 def test_settings_update(client):
     resp = client.patch(
-        "/projects/p7/settings", json={"project_start": "2027-01-01", "work_weekends": True}
+        "/projects/p7/settings", json={"project_start": "2027-01-01", "weekend_policy": "all"}
     )
     assert resp.status_code == 200
     setup = client.get("/projects/p7/setup").json()
     assert setup["project_start"] == "2027-01-01"
-    assert setup["work_weekends"] is True
+    assert setup["weekend_policy"] == "all"
+
+
+def test_settings_update_rejects_an_invalid_weekend_policy(client):
+    resp = client.patch("/projects/p7b/settings", json={"weekend_policy": "weekends-if-i-feel-like-it"})
+    assert resp.status_code == 400
+
+
+def test_blocked_dates_add_and_remove(client):
+    resp = client.post("/projects/p7c/blocked-dates", json={"date": "2027-01-01"})
+    assert resp.status_code == 200
+    assert resp.json()["blocked_dates"] == ["2027-01-01"]
+
+    resp = client.delete("/projects/p7c/blocked-dates/2027-01-01")
+    assert resp.status_code == 200
+    assert resp.json()["blocked_dates"] == []
 
 
 def test_changelog_reflects_mutations(client):

@@ -85,14 +85,17 @@ export interface Stage {
   label: string;
 }
 
+export type WeekendPolicy = "none" | "saturdays" | "all";
+
 export interface Setup {
   rooms: string[];
   rates: Rate[];
   phases: Phase[];
   stages: Stage[];
   project_start: string;
-  work_weekends: boolean;
+  weekend_policy: WeekendPolicy;
   sequence_stages: boolean;
+  blocked_dates: string[];
 }
 
 export interface TaskLineView {
@@ -245,9 +248,10 @@ export type TransferMode = "copy" | "move";
 // ---- org-wide defaults new projects are seeded with (store/global_settings.py) ----
 
 export interface GlobalSettings {
-  work_weekends: boolean;
+  weekend_policy: WeekendPolicy;
   sequence_stages: boolean;
   rates: Rate[];
+  blocked_dates: string[];
 }
 
 // ---- agentic chat (agents/chat_stream.py, Phase 7) -------------------------

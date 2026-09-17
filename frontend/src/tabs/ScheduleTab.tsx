@@ -3,13 +3,20 @@ import { api } from "../api/client";
 import { useFetch } from "../api/hooks";
 import { fmtDate } from "../format";
 import { tradeBucket, tradeColorVar } from "../trade";
-import type { TaskView } from "../api/types";
+import { Menu } from "../components/Menu";
+import type { TaskView, WeekendPolicy } from "../api/types";
 import { TaskEditor } from "./TaskEditor";
 import { GanttView } from "./GanttView";
 import { AgendaView } from "./AgendaView";
 import { BoardView } from "./BoardView";
 
 type View = "timeline" | "agenda" | "board";
+
+const WEEKEND_POLICY_LABELS: Record<WeekendPolicy, string> = {
+  none: "Weekdays only",
+  saturdays: "+ Saturdays",
+  all: "Every day",
+};
 
 export function ScheduleTab({ projectId, planVersion }: { projectId: string; planVersion: number }) {
   const { data: setup, error: setupError, loading: setupLoading, reload: reloadSetup } = useFetch(
@@ -93,14 +100,13 @@ export function ScheduleTab({ projectId, planVersion }: { projectId: string; pla
           />
           Run stages in order
         </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={setup.work_weekends}
-            onChange={(e) => api.updateSettings(projectId, { work_weekends: e.target.checked }).then(reloadAll)}
-          />
-          Work weekends
-        </label>
+        <Menu
+          label={`Weekends: ${WEEKEND_POLICY_LABELS[setup.weekend_policy]}`}
+          items={(Object.keys(WEEKEND_POLICY_LABELS) as WeekendPolicy[]).map((policy) => ({
+            label: WEEKEND_POLICY_LABELS[policy],
+            onSelect: () => api.updateSettings(projectId, { weekend_policy: policy }).then(reloadAll),
+          }))}
+        />
       </div>
 
       <div className="legend">
@@ -116,7 +122,12 @@ export function ScheduleTab({ projectId, planVersion }: { projectId: string; pla
         <GanttView tasks={schedule.tasks} stages={setup.stages} onOpenTask={openTask} />
       )}
       {view === "agenda" && (
-        <AgendaView tasks={schedule.tasks} workWeekends={setup.work_weekends} onOpenTask={openTask} />
+        <AgendaView
+          tasks={schedule.tasks}
+          weekendPolicy={setup.weekend_policy}
+          blockedDates={setup.blocked_dates}
+          onOpenTask={openTask}
+        />
       )}
       {view === "board" && (
         <BoardView

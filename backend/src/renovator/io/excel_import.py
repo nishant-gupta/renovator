@@ -20,6 +20,7 @@ from renovator.domain.models import (
     Stage,
     TaskLine,
     TaskStatus,
+    WeekendPolicy,
     new_id,
 )
 from renovator.domain.seed import (
@@ -233,23 +234,36 @@ def import_plan_from_excel(path: Path) -> Plan:
 
     # ---- project settings ----------------------------------------------
     project_start = None
-    work_weekends = False
+    weekend_policy = WeekendPolicy.NONE
     sequence_stages = True
+    blocked_dates: list[str] = []
     for r in _sheet_rows(wb, "Project"):
         key = _s(r.get("Setting")).lower()
         value = _s(r.get("Value"))
         if "start" in key and re.match(r"^\d{4}-\d{2}-\d{2}$", value):
             project_start = value
         if "weekend" in key:
-            work_weekends = value[:1].lower() == "y"
+            # "Saturdays only" (new) vs. the legacy Yes/No toggle a workbook
+            # exported before weekend_policy existed would still have.
+            if "saturday" in value.lower():
+                weekend_policy = WeekendPolicy.SATURDAYS
+            elif value[:1].lower() == "y":
+                weekend_policy = WeekendPolicy.ALL
+            else:
+                weekend_policy = WeekendPolicy.NONE
         if "cascade" in key:
             sequence_stages = value[:1].lower() == "y"
+        if "blocked" in key:
+            blocked_dates = sorted(
+                d for d in (part.strip() for part in value.split(",")) if re.match(r"^\d{4}-\d{2}-\d{2}$", d)
+            )
 
     return Plan(
         settings=ProjectSettings(
             project_start=project_start or datetime.date.today().isoformat(),
-            work_weekends=work_weekends,
+            weekend_policy=weekend_policy,
             sequence_stages=sequence_stages,
+            blocked_dates=blocked_dates,
         ),
         rooms=new_rooms or default_rooms(),
         rates=new_rates,

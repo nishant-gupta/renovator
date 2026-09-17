@@ -19,6 +19,7 @@ import type {
   TransferMode,
   TransferResult,
   UsageSummary,
+  WeekendPolicy,
 } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -129,8 +130,12 @@ export const api = {
   // ---- project settings ----------------------------------------------------
   updateSettings: (
     projectId: string,
-    settings: Partial<{ project_start: string; work_weekends: boolean; sequence_stages: boolean }>,
+    settings: Partial<{ project_start: string; weekend_policy: WeekendPolicy; sequence_stages: boolean }>,
   ) => request<Setup>("PATCH", `/projects/${projectId}/settings`, settings),
+  addBlockedDate: (projectId: string, date: string) =>
+    request<Setup>("POST", `/projects/${projectId}/blocked-dates`, { date }),
+  removeBlockedDate: (projectId: string, date: string) =>
+    request<Setup>("DELETE", `/projects/${projectId}/blocked-dates/${encodeURIComponent(date)}`),
 
   // ---- tasks (feature.md §4) --------------------------------------------------
   listTemplates: (projectId: string) => request<Template[]>("GET", `/projects/${projectId}/templates`),
@@ -185,7 +190,7 @@ export const api = {
 
   // ---- global defaults (seed new projects only, never live) -------------
   getGlobalSettings: () => request<GlobalSettings>("GET", "/settings/global"),
-  updateGlobalSettings: (patch: Partial<{ work_weekends: boolean; sequence_stages: boolean }>) =>
+  updateGlobalSettings: (patch: Partial<{ weekend_policy: WeekendPolicy; sequence_stages: boolean }>) =>
     request<GlobalSettings>("PATCH", "/settings/global", patch),
   addGlobalRate: (label: string, unit: string, value: number) =>
     request<GlobalSettings>("POST", "/settings/global/rates", { label, unit, value }),
@@ -193,6 +198,10 @@ export const api = {
     request<GlobalSettings>("PATCH", `/settings/global/rates/${encodeURIComponent(key)}`, { value }),
   deleteGlobalRate: (key: string) =>
     request<GlobalSettings>("DELETE", `/settings/global/rates/${encodeURIComponent(key)}`),
+  addGlobalBlockedDate: (date: string) =>
+    request<GlobalSettings>("POST", "/settings/global/blocked-dates", { date }),
+  removeGlobalBlockedDate: (date: string) =>
+    request<GlobalSettings>("DELETE", `/settings/global/blocked-dates/${encodeURIComponent(date)}`),
 
   // ---- agentic chat + plan-change stream (Phase 7) -----------------------
   /** Replays a thread's checkpointed history — including a still-pending

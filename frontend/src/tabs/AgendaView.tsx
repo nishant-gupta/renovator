@@ -1,10 +1,12 @@
-import { addDays, fmtDayLabel, isWeekend, isoDate, isoWeekStart, parseISO, weekdayShort } from "../dates";
+import { addDays, fmtDayLabel, isWeekend, isWorkday, isoDate, isoWeekStart, parseISO, weekdayShort } from "../dates";
 import { tradeBucket, tradeColorVar } from "../trade";
 import type { ScheduledTaskView } from "../api/types";
+import type { WeekendPolicy } from "../dates";
 
 interface AgendaViewProps {
   tasks: ScheduledTaskView[];
-  workWeekends: boolean;
+  weekendPolicy: WeekendPolicy;
+  blockedDates: string[];
   onOpenTask: (taskId: string) => void;
 }
 
@@ -14,9 +16,10 @@ interface DayRow {
   active: ScheduledTaskView[];
 }
 
-export function AgendaView({ tasks, workWeekends, onOpenTask }: AgendaViewProps) {
+export function AgendaView({ tasks, weekendPolicy, blockedDates, onOpenTask }: AgendaViewProps) {
   const shown = tasks.filter((t) => t.start && t.end);
   if (shown.length === 0) return <div className="empty">No scheduled tasks match.</div>;
+  const blockedSet = new Set(blockedDates);
 
   let minD = parseISO(shown[0].start!);
   let maxD = parseISO(shown[0].end!);
@@ -29,7 +32,7 @@ export function AgendaView({ tasks, workWeekends, onOpenTask }: AgendaViewProps)
 
   const rowsByDate = new Map<string, DayRow>();
   for (let d = new Date(minD); d <= maxD; d = addDays(d, 1)) {
-    if (!workWeekends && isWeekend(d)) continue;
+    if (!isWorkday(d, weekendPolicy, blockedSet)) continue;
     const key = isoDate(d);
     const starting = shown.filter((t) => t.start === key);
     const active = shown.filter((t) => t.start! <= key && key <= t.end!);

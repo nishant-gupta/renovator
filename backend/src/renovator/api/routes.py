@@ -110,13 +110,16 @@ def get_global_settings() -> dict:
 
 
 class UpdateGlobalSettingsBody(BaseModel):
-    work_weekends: bool | None = None
+    weekend_policy: str | None = None
     sequence_stages: bool | None = None
 
 
 @settings_router.patch("")
 def update_global_settings(body: UpdateGlobalSettingsBody) -> dict:
-    return gs.update_global_settings(body.model_dump(exclude_none=True))
+    try:
+        return gs.update_global_settings(body.model_dump(exclude_none=True))
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 class AddGlobalRateBody(BaseModel):
@@ -148,6 +151,26 @@ def update_global_rate(key: str, body: UpdateGlobalRateBody) -> dict:
 @settings_router.delete("/rates/{key}")
 def delete_global_rate(key: str) -> dict:
     return gs.delete_global_rate(key)
+
+
+class BlockedDateBody(BaseModel):
+    date: str  # yyyy-mm-dd
+
+
+@settings_router.post("/blocked-dates")
+def add_global_blocked_date(body: BlockedDateBody) -> dict:
+    try:
+        return gs.add_global_blocked_date(body.date)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@settings_router.delete("/blocked-dates/{date}")
+def delete_global_blocked_date(date: str) -> dict:
+    try:
+        return gs.remove_global_blocked_date(date)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 def _mutate(project_id: str, action: str, detail: str, fn) -> None:
@@ -366,7 +389,7 @@ def move_stage(project_id: str, body: ReorderBody) -> dict:
 
 class SettingsBody(BaseModel):
     project_start: str | None = None
-    work_weekends: bool | None = None
+    weekend_policy: str | None = None
     sequence_stages: bool | None = None
 
 
@@ -375,13 +398,35 @@ def set_project_settings(project_id: str, body: SettingsBody) -> dict:
     _mutate(
         project_id,
         "set_project_settings",
-        f"start={body.project_start} weekends={body.work_weekends} sequence={body.sequence_stages}",
+        f"start={body.project_start} weekend_policy={body.weekend_policy} sequence={body.sequence_stages}",
         lambda plan: ct.set_project_settings(
             plan,
             project_start=body.project_start,
-            work_weekends=body.work_weekends,
+            weekend_policy=body.weekend_policy,
             sequence_stages=body.sequence_stages,
         ),
+    )
+    return get_setup(project_id)
+
+
+@router.post("/blocked-dates")
+def add_blocked_date(project_id: str, body: BlockedDateBody) -> dict:
+    _mutate(
+        project_id,
+        "add_blocked_date",
+        f"Blocked {body.date}",
+        lambda plan: ct.add_blocked_date(plan, body.date),
+    )
+    return get_setup(project_id)
+
+
+@router.delete("/blocked-dates/{date}")
+def remove_blocked_date(project_id: str, date: str) -> dict:
+    _mutate(
+        project_id,
+        "remove_blocked_date",
+        f"Unblocked {date}",
+        lambda plan: ct.remove_blocked_date(plan, date),
     )
     return get_setup(project_id)
 

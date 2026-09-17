@@ -60,8 +60,14 @@ def export_plan_to_excel(plan: Plan, out_path: Path) -> Path:
         "Project",
         [
             {"Setting": "Project start", "Value": plan.settings.project_start or ""},
-            {"Setting": "Work weekends", "Value": "Yes" if plan.settings.work_weekends else "No"},
+            {
+                "Setting": "Weekend work",
+                "Value": {"none": "No", "saturdays": "Saturdays only", "all": "Yes"}[
+                    plan.settings.weekend_policy.value
+                ],
+            },
             {"Setting": "Cascade stages", "Value": "Yes" if plan.settings.sequence_stages else "No"},
+            {"Setting": "Blocked dates", "Value": ", ".join(plan.settings.blocked_dates)},
         ],
     )
 

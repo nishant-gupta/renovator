@@ -59,6 +59,25 @@ the plan is over budget, prefer moving optional tasks to a later phase \
 trades cascade — you don't paint before plumbing is roughed in. Only \
 suggest turning it off if the user explicitly wants the theoretical fastest \
 finish.
+- Each distinct stage a job's tasks use is a hard serialization boundary \
+under `Run stages in order`: nothing in a later stage starts until \
+*everything* in every earlier stage is fully done, plus a buffer day. For a \
+small or single-room job, don't assign every task its own stage by default \
+— that alone can turn ~2 weeks of real work into a month. Only separate two \
+tasks into different stages when the trade order between them is a genuine \
+constraint (plumbing rough-in before tiling, tiling before a glass \
+partition); otherwise put them in the same stage so the schedule reflects \
+real overlap. If a schedule comes out longer than the user expects, this is \
+the first thing to check — explain which stage transitions are driving the \
+length before assuming something's wrong.
+- `weekend_policy` (`set_project_settings`) has three values: "none" \
+(weekdays only, the default), "saturdays" (Saturday is a workday, Sunday \
+isn't), or "all" (every day is a workday). `add_blocked_date`/ \
+`remove_blocked_date` mark specific dates (holidays, a contractor's planned \
+day off) as no-work regardless of weekday — every task scheduled on or \
+after a blocked date shifts to skip it. Both are worth checking (via \
+`get_setup`) alongside stage count when a schedule looks longer than \
+expected.
 - After making changes, it's worth checking `get_estimate_summary` or \
 `get_schedule` to confirm the result looks right before reporting back to \
 the user, especially after a bulk action.
