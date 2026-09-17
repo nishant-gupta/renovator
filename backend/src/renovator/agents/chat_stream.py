@@ -16,15 +16,32 @@ instead of `done`.
 still-pending interrupt) after a page reload, since `StateSnapshot` keeps
 the full message list *and* any unresolved interrupt around independent of
 whether a browser is currently streaming a turn.
+
+Every turn also emits one `usage` event (Phase 9's local cost/latency
+tracker) summing token counts across every *main-agent* model call in the
+turn, persisted via `session.log_usage` for `GET /projects/{id}/usage` to
+aggregate later. Known gap, confirmed live rather than assumed: a
+delegated sub-agent call (the `task` tool, subagents.py::SUBAGENT_MODEL)
+runs as its own nested sub-graph invocation — its internal AIMessages
+(and their usage_metadata) never appear in this thread's top-level
+`messages` state, only the tool's final result does, as an ordinary
+ToolMessage. So a turn that delegates undercounts real spend: the
+sub-agent's own tokens aren't in the total. Capturing those would need
+`stream_mode`'s `subgraphs=True` (separate per-namespace message
+channels, each needing its own "already seen" tracking) — a real
+refactor of this streaming loop, not attempted here; LangSmith tracing
+(§4.9/.env.example) does capture the sub-agent calls if that's needed.
 """
 
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Iterator
 from typing import Any
 
 from renovator.agents.orchestrator import build_orchestrator
+from renovator.agents.pricing import estimate_cost_usd
 from renovator.agents.session import PlanSession
 
 
@@ -68,6 +85,17 @@ def _message_event(msg: Any) -> dict | None:
     return None
 
 
+def _usage_from_message(msg: Any) -> tuple[str, int, int] | None:
+    """(model, input_tokens, output_tokens) for an AIMessage that actually
+    made a model call, or None (ToolMessage/HumanMessage never have this;
+    an AIMessage can lack it too, depending on provider/version)."""
+    usage = getattr(msg, "usage_metadata", None)
+    if not usage:
+        return None
+    model = (getattr(msg, "response_metadata", None) or {}).get("model_name", "unknown")
+    return model, usage.get("input_tokens", 0), usage.get("output_tokens", 0)
+
+
 def _interrupt_event(interrupt: Any) -> dict:
     # Same shape cli.py's _handle_interrupt reads: request["action_requests"]
     # is a list of {"name", "args", "description"} dicts, one per gated
@@ -93,6 +121,25 @@ def stream_turn(session: PlanSession, thread_id: str, step_input: Any) -> Iterat
     # start at however many messages the checkpointer already has for
     # this thread, not 0, or every turn re-emits the whole conversation.
     seen = len(graph.get_state(config).values.get("messages", []))
+    turn_start = time.perf_counter()
+    usage_by_model: dict[str, list[int]] = {}
+
+    def usage_event() -> dict:
+        duration_ms = int((time.perf_counter() - turn_start) * 1000)
+        # Wall-clock time covers the whole turn, not one model call, so it's
+        # only attributed to the first model logged this turn — summing
+        # duration_ms across models in a multi-model turn would double it.
+        for i, (model, (inp, out)) in enumerate(usage_by_model.items()):
+            session.log_usage(model, inp, out, duration_ms if i == 0 else 0)
+        return {
+            "type": "usage",
+            "duration_ms": duration_ms,
+            "total_input_tokens": sum(inp for inp, _ in usage_by_model.values()),
+            "total_output_tokens": sum(out for _, out in usage_by_model.values()),
+            "estimated_cost_usd": round(
+                sum(estimate_cost_usd(model, inp, out) for model, (inp, out) in usage_by_model.items()), 6
+            ),
+        }
 
     try:
         for chunk in graph.stream(step_input, config=config, stream_mode="values"):
@@ -101,16 +148,25 @@ def stream_turn(session: PlanSession, thread_id: str, step_input: Any) -> Iterat
                 event = _message_event(msg)
                 if event:
                     yield _sse(event)
+                usage = _usage_from_message(msg)
+                if usage:
+                    model, inp, out = usage
+                    acc = usage_by_model.setdefault(model, [0, 0])
+                    acc[0] += inp
+                    acc[1] += out
             seen = len(messages)
 
             if "__interrupt__" in chunk:
                 (interrupt,) = chunk["__interrupt__"]
+                yield _sse(usage_event())
                 yield _sse(_interrupt_event(interrupt))
                 return
     except Exception as e:  # noqa: BLE001 - surface to the chat panel instead of a bare 500 mid-stream
+        yield _sse(usage_event())
         yield _sse({"type": "error", "message": str(e)})
         return
 
+    yield _sse(usage_event())
     yield _sse({"type": "done"})
 
 

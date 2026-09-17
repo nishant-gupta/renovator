@@ -700,6 +700,16 @@ def get_chat_history(project_id: str) -> dict:
     return {"events": history_events(session, project_id)}
 
 
+@router.get("/usage")
+def get_usage(project_id: str) -> dict:
+    """Phase 9's local cost/latency dashboard data — cumulative token
+    counts/duration per model call this project's chat has made, logged by
+    chat_stream.py's usage_event() after every turn. Estimated cost only
+    (agents/pricing.py); real billing includes prompt-caching discounts
+    this doesn't model."""
+    return PlanSession(project_id=project_id).usage_summary()
+
+
 def _plan_events(project_id: str, poll_interval: float, max_polls: int | None):
     """Yields an SSE event whenever the plan's `updated_at` changes — cheap
     enough to poll (one indexed column read) and avoids needing an

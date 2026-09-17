@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../api/client";
 import { toolLabel } from "../toolLabels";
 import { Markdown } from "./Markdown";
-import type { ChatEvent, ChatInterruptAction, ChatResumeDecision } from "../api/types";
+import type { ChatEvent, ChatInterruptAction, ChatResumeDecision, UsageSummary } from "../api/types";
+
+function formatTokenCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
 
 interface ChatPanelProps {
   projectId: string;
@@ -26,9 +32,9 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
  * schedule", "Updated a rate failed: ..." — never the raw args/JSON
  * result. The full call (name + args) and result (name + content) are
  * still `console.debug`'d as they happen, so a developer can inspect them
- * in devtools without the transcript itself being noisy. There's no
- * LangSmith/tracing wired up yet (a Phase 9 item) — this is the interim
- * "look at the logs" story. */
+ * in devtools without the transcript itself being noisy. For a full trace
+ * (including sub-agent calls, which the local usage dashboard below can't
+ * see), set LANGSMITH_TRACING in the backend's .env instead. */
 function summarizeToolResult(name: string, content: string): { failed: boolean; text: string } {
   let parsed: unknown;
   try {
@@ -62,6 +68,11 @@ export function ChatPanel({ projectId, hasLlmKey }: ChatPanelProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  // Seeded from GET /usage on mount (all-time, main-agent calls only — see
+  // chat_stream.py's docstring for the sub-agent-usage gap), then
+  // incremented locally as live "usage" events arrive so it doesn't need
+  // a re-fetch after every turn.
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
   const nextId = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -100,6 +111,16 @@ export function ChatPanel({ projectId, hasLlmKey }: ChatPanelProps) {
       case "error":
         push({ kind: "error", message: event.message });
         break;
+      case "usage":
+        setUsage((prev) => ({
+          total_calls: (prev?.total_calls ?? 0) + 1,
+          total_input_tokens: (prev?.total_input_tokens ?? 0) + event.total_input_tokens,
+          total_output_tokens: (prev?.total_output_tokens ?? 0) + event.total_output_tokens,
+          total_duration_ms: (prev?.total_duration_ms ?? 0) + event.duration_ms,
+          by_model: prev?.by_model ?? [],
+          recent: prev?.recent ?? [],
+        }));
+        break;
       case "done":
         break;
     }
@@ -111,6 +132,7 @@ export function ChatPanel({ projectId, hasLlmKey }: ChatPanelProps) {
       .getChatHistory(projectId)
       .then((res) => res.events.forEach((e) => handleEvent(e)))
       .catch((e) => setLoadError(e instanceof ApiError ? e.detail : String(e)));
+    api.getUsage(projectId).then(setUsage).catch(() => {});
     // Runs once per mount — this component is keyed by projectId in
     // App.tsx, so a project switch remounts it fresh rather than needing
     // this effect to react to a changing id.
@@ -189,6 +211,14 @@ export function ChatPanel({ projectId, hasLlmKey }: ChatPanelProps) {
     <aside className="chat-dock">
       <div className="chat-header">
         <span>Agent chat</span>
+        {usage && usage.total_calls > 0 && (
+          <span
+            className="chat-usage"
+            title="Cumulative main-agent token usage for this project (estimate — excludes sub-agent calls; see backend/README.md)"
+          >
+            {formatTokenCount(usage.total_input_tokens + usage.total_output_tokens)} tok
+          </span>
+        )}
         <button className="icon-btn" title="Collapse" onClick={() => setOpen(false)}>
           ✕
         </button>

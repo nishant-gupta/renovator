@@ -18,6 +18,7 @@ import type {
   TrackSummary,
   TransferMode,
   TransferResult,
+  UsageSummary,
 } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -198,6 +199,11 @@ export const api = {
    * interrupt, if any — so the chat panel can recover its transcript (and
    * an in-flight approve/reject prompt) after a page reload. */
   getChatHistory: (projectId: string) => request<{ events: ChatEvent[] }>("GET", `/projects/${projectId}/chat/history`),
+
+  /** Phase 9's local cost/latency dashboard data — cumulative, not just
+   * this session's, and main-agent calls only (see chat_stream.py's
+   * docstring for the sub-agent-usage gap). */
+  getUsage: (projectId: string) => request<UsageSummary>("GET", `/projects/${projectId}/usage`),
 
   streamChat: async (
     projectId: string,

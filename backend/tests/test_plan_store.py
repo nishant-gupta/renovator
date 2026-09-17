@@ -57,3 +57,35 @@ def test_projects_are_isolated_by_id():
 
     b = ps.PlanStore("proj-y").load_or_create()
     assert b.rooms == []
+
+
+def test_usage_summary_empty_for_a_fresh_project():
+    store = ps.PlanStore("proj-usage-empty")
+    summary = store.usage_summary()
+    assert summary["total_calls"] == 0
+    assert summary["total_input_tokens"] == 0
+    assert summary["total_output_tokens"] == 0
+    assert summary["by_model"] == []
+    assert summary["recent"] == []
+
+
+def test_log_usage_accumulates_across_calls_and_models():
+    store = ps.PlanStore("proj-usage")
+    store.log_usage("claude-sonnet-4-5", 100, 20, 500)
+    store.log_usage("claude-haiku-4-5", 50, 10, 200)
+    store.log_usage("claude-sonnet-4-5", 30, 5, 100)
+
+    summary = store.usage_summary()
+    assert summary["total_calls"] == 3
+    assert summary["total_input_tokens"] == 180
+    assert summary["total_output_tokens"] == 35
+    assert summary["total_duration_ms"] == 800
+
+    by_model = {row["model"]: row for row in summary["by_model"]}
+    assert by_model["claude-sonnet-4-5"]["calls"] == 2
+    assert by_model["claude-sonnet-4-5"]["input_tokens"] == 130
+    assert by_model["claude-haiku-4-5"]["calls"] == 1
+
+    assert len(summary["recent"]) == 3
+    assert summary["recent"][0]["model"] == "claude-sonnet-4-5"  # most recent first
+    assert summary["recent"][0]["input_tokens"] == 30

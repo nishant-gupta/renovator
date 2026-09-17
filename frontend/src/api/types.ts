@@ -269,9 +269,34 @@ export type ChatEvent =
   | { type: "message"; role: "user" | "assistant"; content: string; has_image?: boolean }
   | { type: "interrupt"; actions: ChatInterruptAction[] }
   | { type: "error"; message: string }
+  | {
+      type: "usage";
+      duration_ms: number;
+      total_input_tokens: number;
+      total_output_tokens: number;
+      estimated_cost_usd: number;
+    }
   | { type: "done" };
 
 export type ChatResumeDecision = { type: "approve" } | { type: "reject"; message: string };
+
+// ---- Phase 9's local cost/latency dashboard (agents/chat_stream.py, store/plan_store.py) ----
+
+export interface UsageByModel {
+  model: string;
+  calls: number;
+  input_tokens: number;
+  output_tokens: number;
+}
+
+export interface UsageSummary {
+  total_calls: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_duration_ms: number;
+  by_model: UsageByModel[];
+  recent: { at: string; model: string; input_tokens: number; output_tokens: number; duration_ms: number }[];
+}
 
 export type PlanEvent = { type: "ready" } | { type: "changed"; updated_at: string };
 

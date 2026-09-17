@@ -30,13 +30,13 @@ _DATA_DIR = tempfile.mkdtemp(prefix="renovator-eval-")
 os.environ["RENOVATOR_DATA_DIR"] = _DATA_DIR
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from dotenv import load_dotenv  # noqa: E402
+from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-from renovator.app import app  # noqa: E402
+from renovator.app import app
 
 client = TestClient(app, headers={"Content-Type": "application/json"})
 

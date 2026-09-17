@@ -34,3 +34,13 @@ class PlanSession:
 
     def changelog(self, limit: int = 50) -> list[dict]:
         return self.store.changelog(limit=limit) if self.store is not None else []
+
+    def log_usage(self, model: str, input_tokens: int, output_tokens: int, duration_ms: int) -> None:
+        """Phase 9's local cost/latency tracker. No-op for a non-persistent
+        (no project_id) session, same as persist()."""
+        if self.store is not None:
+            self.store.log_usage(model, input_tokens, output_tokens, duration_ms)
+
+    def usage_summary(self) -> dict:
+        empty = {"total_calls": 0, "total_input_tokens": 0, "total_output_tokens": 0, "total_duration_ms": 0}
+        return self.store.usage_summary() if self.store is not None else {**empty, "by_model": [], "recent": []}

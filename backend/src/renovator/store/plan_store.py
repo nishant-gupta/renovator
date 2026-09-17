@@ -29,6 +29,14 @@ CREATE TABLE IF NOT EXISTS changelog (
     action TEXT NOT NULL,
     detail TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS usage_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    at TEXT NOT NULL,
+    model TEXT NOT NULL,
+    input_tokens INTEGER NOT NULL,
+    output_tokens INTEGER NOT NULL,
+    duration_ms INTEGER NOT NULL
+);
 """
 
 
@@ -101,6 +109,48 @@ class PlanStore:
         with self._connect() as conn:
             row = conn.execute("SELECT updated_at FROM plan_snapshot WHERE id = 1").fetchone()
         return row[0] if row else None
+
+    def log_usage(self, model: str, input_tokens: int, output_tokens: int, duration_ms: int) -> None:
+        """One row per model call (Phase 9's local cost/latency tracker,
+        design doc §4.6 — an alternative to LangSmith that needs no
+        external account). A single chat turn can log more than one row
+        (main agent + a delegated sub-agent call each have their own)."""
+        now = datetime.datetime.now().isoformat(timespec="seconds")
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT INTO usage_log (at, model, input_tokens, output_tokens, duration_ms) VALUES (?, ?, ?, ?, ?)",
+                (now, model, input_tokens, output_tokens, duration_ms),
+            )
+            conn.commit()
+
+    def usage_summary(self, recent_limit: int = 20) -> dict:
+        with self._connect() as conn:
+            total_calls, total_input, total_output, total_duration = conn.execute(
+                "SELECT COUNT(*), COALESCE(SUM(input_tokens), 0), COALESCE(SUM(output_tokens), 0), "
+                "COALESCE(SUM(duration_ms), 0) FROM usage_log"
+            ).fetchone()
+            by_model = conn.execute(
+                "SELECT model, COUNT(*), COALESCE(SUM(input_tokens), 0), COALESCE(SUM(output_tokens), 0) "
+                "FROM usage_log GROUP BY model ORDER BY model"
+            ).fetchall()
+            recent = conn.execute(
+                "SELECT at, model, input_tokens, output_tokens, duration_ms FROM usage_log "
+                "ORDER BY id DESC LIMIT ?",
+                (recent_limit,),
+            ).fetchall()
+        return {
+            "total_calls": total_calls,
+            "total_input_tokens": total_input,
+            "total_output_tokens": total_output,
+            "total_duration_ms": total_duration,
+            "by_model": [
+                {"model": m, "calls": c, "input_tokens": it, "output_tokens": ot} for m, c, it, ot in by_model
+            ],
+            "recent": [
+                {"at": at, "model": m, "input_tokens": it, "output_tokens": ot, "duration_ms": dm}
+                for at, m, it, ot, dm in recent
+            ],
+        }
 
     def changelog(self, limit: int = 50) -> list[dict]:
         with self._connect() as conn:

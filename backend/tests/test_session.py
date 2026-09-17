@@ -39,3 +39,25 @@ def test_explicit_plan_overrides_stored_plan():
     custom.rooms = ["Custom Room"]
     session = PlanSession(project_id="override-test", plan=custom)
     assert session.plan.rooms == ["Custom Room"]
+
+
+def test_ephemeral_session_usage_summary_is_a_noop_with_empty_result():
+    session = PlanSession()
+    session.log_usage("claude-sonnet-4-5", 100, 20, 500)  # must not raise
+    summary = session.usage_summary()
+    assert summary == {
+        "total_calls": 0,
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+        "total_duration_ms": 0,
+        "by_model": [],
+        "recent": [],
+    }
+
+
+def test_persistent_session_usage_summary_reflects_logged_usage():
+    session = PlanSession(project_id="usage-session-test")
+    session.log_usage("claude-sonnet-4-5", 100, 20, 500)
+    summary = session.usage_summary()
+    assert summary["total_calls"] == 1
+    assert summary["total_input_tokens"] == 100

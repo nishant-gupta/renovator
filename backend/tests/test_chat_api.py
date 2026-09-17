@@ -111,6 +111,19 @@ def test_parse_data_url_falls_back_to_jpeg_without_a_recognizable_header():
     assert routes._parse_data_url("data:image/webp;base64,aGVsbG8=") == ("image/webp", "aGVsbG8=")
 
 
+def test_usage_route_returns_the_summary(client):
+    resp = client.get("/projects/p1/usage")
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "total_calls": 0,
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+        "total_duration_ms": 0,
+        "by_model": [],
+        "recent": [],
+    }
+
+
 def test_chat_history_route_returns_the_events_list(client, monkeypatch):
     captured = {}
 

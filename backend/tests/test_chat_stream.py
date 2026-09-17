@@ -23,9 +23,11 @@ class HumanMessage:
 
 
 class AIMessage:
-    def __init__(self, content: str = "", tool_calls=None):
+    def __init__(self, content: str = "", tool_calls=None, usage_metadata=None, response_metadata=None):
         self.content = content
         self.tool_calls = tool_calls
+        self.usage_metadata = usage_metadata
+        self.response_metadata = response_metadata or {}
 
 
 class ToolMessage:
@@ -61,10 +63,19 @@ class FakeGraph:
             raise self._error
 
 
-def _events(monkeypatch, graph) -> list[dict]:
+def _all_events(monkeypatch, graph) -> list[dict]:
     monkeypatch.setattr(chat_stream, "build_orchestrator", lambda session: graph)
     raw = list(chat_stream.stream_turn(PlanSession(), "thread-1", {"messages": []}))
     return [json.loads(line[len("data: ") :].strip()) for line in raw]
+
+
+def _events(monkeypatch, graph) -> list[dict]:
+    # Every turn now also emits one `usage` event (Phase 9) whose
+    # `duration_ms` is real wall-clock time — irrelevant noise for tests
+    # that are just checking the message/tool_call/interrupt sequence, so
+    # it's filtered here; test_stream_turn_emits_a_usage_event below is the
+    # one that actually checks it.
+    return [e for e in _all_events(monkeypatch, graph) if e["type"] != "usage"]
 
 
 def test_stream_turn_emits_tool_call_then_result_then_message(monkeypatch):
@@ -217,6 +228,59 @@ def test_multimodal_human_message_with_only_an_image_and_no_text(monkeypatch):
     events = _events(monkeypatch, graph)
 
     assert events[0] == {"type": "message", "role": "user", "content": "", "has_image": True}
+
+
+def test_stream_turn_emits_a_usage_event_summing_all_model_calls(monkeypatch):
+    ai_call = AIMessage(
+        tool_calls=[{"name": "add_room", "args": {"name": "Kitchen"}}],
+        usage_metadata={"input_tokens": 100, "output_tokens": 20},
+        response_metadata={"model_name": "claude-sonnet-4-5"},
+    )
+    tool_result = ToolMessage(name="add_room", content={"ok": True})
+    ai_final = AIMessage(
+        content="Done.",
+        usage_metadata={"input_tokens": 150, "output_tokens": 10},
+        response_metadata={"model_name": "claude-sonnet-4-5"},
+    )
+    graph = FakeGraph(
+        [
+            {"messages": [ai_call]},
+            {"messages": [ai_call, tool_result]},
+            {"messages": [ai_call, tool_result, ai_final]},
+        ]
+    )
+
+    events = _all_events(monkeypatch, graph)
+
+    usage_events = [e for e in events if e["type"] == "usage"]
+    assert len(usage_events) == 1
+    usage = usage_events[0]
+    assert usage["total_input_tokens"] == 250
+    assert usage["total_output_tokens"] == 30
+    assert usage["estimated_cost_usd"] > 0
+    assert usage["duration_ms"] >= 0
+    # emitted right before the terminal event, not interleaved with tool_call/message
+    assert events[-2] == usage
+    assert events[-1] == {"type": "done"}
+
+
+def test_stream_turn_usage_event_persists_via_session(monkeypatch, tmp_path):
+    monkeypatch.setenv("RENOVATOR_DATA_DIR", str(tmp_path))
+    ai_call = AIMessage(
+        content="Done.",
+        usage_metadata={"input_tokens": 100, "output_tokens": 20},
+        response_metadata={"model_name": "claude-sonnet-4-5"},
+    )
+    graph = FakeGraph([{"messages": [ai_call]}])
+    monkeypatch.setattr(chat_stream, "build_orchestrator", lambda session: graph)
+
+    session = PlanSession(project_id="usage-persist-test")
+    list(chat_stream.stream_turn(session, "thread-1", {"messages": []}))
+
+    summary = session.usage_summary()
+    assert summary["total_calls"] == 1
+    assert summary["total_input_tokens"] == 100
+    assert summary["total_output_tokens"] == 20
 
 
 def test_history_events_empty_for_a_fresh_thread(monkeypatch):

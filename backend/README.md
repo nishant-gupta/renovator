@@ -11,6 +11,8 @@ uv sync
 cp .env.example .env   # fill in ANTHROPIC_API_KEY (and TAVILY_API_KEY for research tools)
 ```
 
+Optional: set `LANGSMITH_TRACING=true` + `LANGSMITH_API_KEY`/`LANGSMITH_PROJECT` in `.env` (see `.env.example`) to get every agent/tool call traced in the [LangSmith](https://smith.langchain.com) UI — LangChain reads these itself, no code change needed. Leave unset to stay fully local (the default, and how this app has run through Phase 8).
+
 ## Run
 
 ```bash
