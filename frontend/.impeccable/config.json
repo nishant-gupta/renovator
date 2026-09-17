@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "frontend/src/App.css"
+        ],
+        "createdAt": "2026-09-16T13:16:48.810Z",
+        "reason": "feature.md §5.3 explicitly specifies a trade-colored left border on Board cards; color is set dynamically per-card from the shared trade-color system (trade.ts), not a static decorative accent"
+      }
+    ]
+  }
+}

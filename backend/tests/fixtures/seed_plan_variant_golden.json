@@ -1,0 +1,2457 @@
+{
+  "plan": {
+    "settings": {
+      "projectStart": "2026-09-21",
+      "workWeekends": true,
+      "sequenceStages": false
+    },
+    "rooms": [
+      "Master Bedroom",
+      "Kids Room",
+      "Guest Room",
+      "Study Room",
+      "Living Room",
+      "Overall (Whole House)",
+      "Balcony",
+      "Kids Bathroom"
+    ],
+    "rates": [
+      {
+        "key": "carpenter",
+        "label": "Carpenter (inclusive)",
+        "unit": "sqft",
+        "value": 1500
+      },
+      {
+        "key": "paint_material",
+        "label": "Paint — material",
+        "unit": "sqft",
+        "value": 11
+      },
+      {
+        "key": "paint_labor",
+        "label": "Paint — labour",
+        "unit": "sqft",
+        "value": 9
+      },
+      {
+        "key": "civil_material",
+        "label": "Civil / POP — material",
+        "unit": "sqft",
+        "value": 30
+      },
+      {
+        "key": "civil_labor",
+        "label": "Civil / POP — labour",
+        "unit": "sqft",
+        "value": 25
+      },
+      {
+        "key": "tile_material",
+        "label": "Tile — material",
+        "unit": "sqft",
+        "value": 130
+      },
+      {
+        "key": "tile_labor",
+        "label": "Tile — labour",
+        "unit": "sqft",
+        "value": 40
+      },
+      {
+        "key": "granite_material",
+        "label": "Countertop — material",
+        "unit": "sqft",
+        "value": 250
+      },
+      {
+        "key": "granite_labor",
+        "label": "Countertop — labour",
+        "unit": "sqft",
+        "value": 80
+      },
+      {
+        "key": "electrical_material",
+        "label": "Electrical — material (per point)",
+        "unit": "point",
+        "value": 1200
+      },
+      {
+        "key": "electrical_labor",
+        "label": "Electrical — labour (per point)",
+        "unit": "point",
+        "value": 300
+      },
+      {
+        "key": "glass_material",
+        "label": "Glass partition — material",
+        "unit": "sqft",
+        "value": 650
+      },
+      {
+        "key": "glass_labor",
+        "label": "Glass partition — labour",
+        "unit": "sqft",
+        "value": 150
+      },
+      {
+        "key": "skirting",
+        "label": "Skirting (inclusive)",
+        "unit": "running ft",
+        "value": 185
+      }
+    ],
+    "phases": [
+      {
+        "id": 1,
+        "label": "Phase 1 — Now"
+      },
+      {
+        "id": 2,
+        "label": "Phase 2 — Next"
+      },
+      {
+        "id": 3,
+        "label": "Phase 3 — Later"
+      }
+    ],
+    "stages": [
+      {
+        "id": 1,
+        "label": "Civil & POP repairs"
+      },
+      {
+        "id": 2,
+        "label": "Rough plumbing"
+      },
+      {
+        "id": 3,
+        "label": "Rough electrical"
+      },
+      {
+        "id": 4,
+        "label": "False ceiling"
+      },
+      {
+        "id": 5,
+        "label": "Tiling, flooring & countertop"
+      },
+      {
+        "id": 6,
+        "label": "Glasswork"
+      },
+      {
+        "id": 7,
+        "label": "Painting"
+      },
+      {
+        "id": 8,
+        "label": "Electrical fixtures"
+      },
+      {
+        "id": 9,
+        "label": "Bathroom fixtures"
+      },
+      {
+        "id": 10,
+        "label": "Carpentry & furniture"
+      }
+    ],
+    "items": [
+      {
+        "id": "mb_tv",
+        "taskId": "mb_tv",
+        "room": "Master Bedroom",
+        "name": "TV unit with study section",
+        "category": "Carpentry",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter",
+        "phase": 1,
+        "stageId": 10,
+        "mandatory": true,
+        "durationDays": 4,
+        "startOverride": "2026-10-05",
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "carpenter",
+        "qty": 52,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "mb_chair",
+        "taskId": "mb_chair",
+        "room": "Master Bedroom",
+        "name": "New study chair",
+        "category": "Furnishing",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter/Vendor",
+        "phase": 2,
+        "stageId": 10,
+        "mandatory": false,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 4500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "mb_hb",
+        "taskId": "mb_hb",
+        "room": "Master Bedroom",
+        "name": "Repair bed headboard",
+        "category": "Carpentry",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter",
+        "phase": 1,
+        "stageId": 10,
+        "mandatory": true,
+        "durationDays": 2,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 9000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kr_leak_m",
+        "taskId": "task_se057m",
+        "room": "Kids Room",
+        "name": "Fix wall leakage",
+        "category": "Plumbing",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 2,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 2500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kr_leak_l",
+        "taskId": "task_se057m",
+        "room": "Kids Room",
+        "name": "Fix wall leakage",
+        "category": "Plumbing",
+        "lineType": "Labor",
+        "workerType": "Plumber",
+        "phase": 1,
+        "stageId": 2,
+        "mandatory": true,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 2000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kr_rt_m",
+        "taskId": "task_8q7ozi",
+        "room": "Kids Room",
+        "name": "Re-tile affected wall",
+        "category": "Tiling",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 5,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "tile_material",
+        "qty": 24,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kr_rt_l",
+        "taskId": "task_8q7ozi",
+        "room": "Kids Room",
+        "name": "Re-tile affected wall",
+        "category": "Tiling",
+        "lineType": "Labor",
+        "workerType": "Tile Installer",
+        "phase": 1,
+        "stageId": 5,
+        "mandatory": true,
+        "durationDays": 2,
+        "startOverride": null,
+        "dependsOn": [
+          "kr_leak_l"
+        ],
+        "costMethod": "rate",
+        "rateKey": "tile_labor",
+        "qty": 24,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kr_tbl",
+        "taskId": "kr_tbl",
+        "room": "Kids Room",
+        "name": "Custom kids study table",
+        "category": "Carpentry",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter",
+        "phase": 1,
+        "stageId": 10,
+        "mandatory": true,
+        "durationDays": 3,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 22000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kr_ch",
+        "taskId": "kr_ch",
+        "room": "Kids Room",
+        "name": "2 kids chairs",
+        "category": "Furnishing",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter/Vendor",
+        "phase": 2,
+        "stageId": 10,
+        "mandatory": false,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 6000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kr_lt_m",
+        "taskId": "task_zk8m97",
+        "room": "Kids Room",
+        "name": "3 light fixtures",
+        "category": "Electrical",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 8,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "electrical_material",
+        "qty": 3,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kr_lt_l",
+        "taskId": "task_zk8m97",
+        "room": "Kids Room",
+        "name": "3 light fixtures",
+        "category": "Electrical",
+        "lineType": "Labor",
+        "workerType": "Electrician",
+        "phase": 1,
+        "stageId": 8,
+        "mandatory": true,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "electrical_labor",
+        "qty": 3,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "gr_skirt",
+        "taskId": "gr_skirt",
+        "room": "Guest Room",
+        "name": "Wooden flooring skirting repair",
+        "category": "Carpentry",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter",
+        "phase": 1,
+        "stageId": 10,
+        "mandatory": true,
+        "durationDays": 2,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "skirting",
+        "qty": 35,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "gr_pop_m",
+        "taskId": "task_l869np",
+        "room": "Guest Room",
+        "name": "Wall POP",
+        "category": "Civil/POP",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 1,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "civil_material",
+        "qty": 130,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "gr_pop_l",
+        "taskId": "task_l869np",
+        "room": "Guest Room",
+        "name": "Wall POP",
+        "category": "Civil/POP",
+        "lineType": "Labor",
+        "workerType": "Mason / POP",
+        "phase": 1,
+        "stageId": 1,
+        "mandatory": true,
+        "durationDays": 3,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "civil_labor",
+        "qty": 130,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "gr_sw_m",
+        "taskId": "task_y128ft",
+        "room": "Guest Room",
+        "name": "Change switchboards",
+        "category": "Electrical",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 2,
+        "stageId": 8,
+        "mandatory": false,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 2500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "gr_sw_l",
+        "taskId": "task_y128ft",
+        "room": "Guest Room",
+        "name": "Change switchboards",
+        "category": "Electrical",
+        "lineType": "Labor",
+        "workerType": "Electrician",
+        "phase": 2,
+        "stageId": 8,
+        "mandatory": false,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 1500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "sr_loft",
+        "taskId": "sr_loft",
+        "room": "Study Room",
+        "name": "Panel on loft",
+        "category": "Carpentry",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter",
+        "phase": 2,
+        "stageId": 10,
+        "mandatory": false,
+        "durationDays": 2,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 12000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "sr_fl_m",
+        "taskId": "task_aidkrs",
+        "room": "Study Room",
+        "name": "Flooring",
+        "category": "Flooring",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 2,
+        "stageId": 5,
+        "mandatory": false,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "tile_material",
+        "qty": 130,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "sr_fl_l",
+        "taskId": "task_aidkrs",
+        "room": "Study Room",
+        "name": "Flooring",
+        "category": "Flooring",
+        "lineType": "Labor",
+        "workerType": "Flooring Contractor",
+        "phase": 2,
+        "stageId": 5,
+        "mandatory": false,
+        "durationDays": 3,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "tile_labor",
+        "qty": 130,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "sr_w_m",
+        "taskId": "task_efw44z",
+        "room": "Study Room",
+        "name": "Wall repair + POP",
+        "category": "Civil/POP",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 1,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "civil_material",
+        "qty": 150,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "sr_w_l",
+        "taskId": "task_efw44z",
+        "room": "Study Room",
+        "name": "Wall repair + POP",
+        "category": "Civil/POP",
+        "lineType": "Labor",
+        "workerType": "Mason / POP",
+        "phase": 1,
+        "stageId": 1,
+        "mandatory": true,
+        "durationDays": 3,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "civil_labor",
+        "qty": 150,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "lr_tv",
+        "taskId": "lr_tv",
+        "room": "Living Room",
+        "name": "TV unit",
+        "category": "Carpentry",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter",
+        "phase": 1,
+        "stageId": 10,
+        "mandatory": true,
+        "durationDays": 4,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "carpenter",
+        "qty": 63,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "lr_cr",
+        "taskId": "lr_cr",
+        "room": "Living Room",
+        "name": "Crockery unit",
+        "category": "Carpentry",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter",
+        "phase": 1,
+        "stageId": 10,
+        "mandatory": true,
+        "durationDays": 4,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "carpenter",
+        "qty": 50,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "lr_pn",
+        "taskId": "lr_pn",
+        "room": "Living Room",
+        "name": "Paneling",
+        "category": "Carpentry",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter",
+        "phase": 1,
+        "stageId": 10,
+        "mandatory": true,
+        "durationDays": 5,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 60000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "lr_wd_m",
+        "taskId": "task_95jxbt",
+        "room": "Living Room",
+        "name": "Wall design",
+        "category": "Painting",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 7,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 9000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "lr_wd_l",
+        "taskId": "task_95jxbt",
+        "room": "Living Room",
+        "name": "Wall design",
+        "category": "Painting",
+        "lineType": "Labor",
+        "workerType": "Painter",
+        "phase": 1,
+        "stageId": 7,
+        "mandatory": true,
+        "durationDays": 2,
+        "startOverride": null,
+        "dependsOn": [
+          "ov_wall_l"
+        ],
+        "costMethod": "custom",
+        "customAmount": 7000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "ov_wall_m",
+        "taskId": "task_f6n24h",
+        "room": "Overall (Whole House)",
+        "name": "Wall repairs",
+        "category": "Civil",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 1,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 11000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "ov_wall_l",
+        "taskId": "task_f6n24h",
+        "room": "Overall (Whole House)",
+        "name": "Wall repairs",
+        "category": "Civil",
+        "lineType": "Labor",
+        "workerType": "Mason",
+        "phase": 1,
+        "stageId": 1,
+        "mandatory": true,
+        "durationDays": 4,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 10000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "ov_pop_m",
+        "taskId": "task_tmrnue",
+        "room": "Overall (Whole House)",
+        "name": "POP as needed",
+        "category": "Civil/POP",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 1,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 8500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "ov_pop_l",
+        "taskId": "task_tmrnue",
+        "room": "Overall (Whole House)",
+        "name": "POP as needed",
+        "category": "Civil/POP",
+        "lineType": "Labor",
+        "workerType": "Mason / POP",
+        "phase": 1,
+        "stageId": 1,
+        "mandatory": true,
+        "durationDays": 3,
+        "startOverride": null,
+        "dependsOn": [
+          "ov_wall_l"
+        ],
+        "costMethod": "custom",
+        "customAmount": 7000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "ov_pt_m",
+        "taskId": "task_5bql0o",
+        "room": "Overall (Whole House)",
+        "name": "Fresh paint",
+        "category": "Painting",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 7,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "paint_material",
+        "qty": 10500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "ov_pt_l",
+        "taskId": "task_5bql0o",
+        "room": "Overall (Whole House)",
+        "name": "Fresh paint",
+        "category": "Painting",
+        "lineType": "Labor",
+        "workerType": "Painter",
+        "phase": 1,
+        "stageId": 7,
+        "mandatory": true,
+        "durationDays": 6,
+        "startOverride": null,
+        "dependsOn": [
+          "ov_pop_l",
+          "gr_pop_l",
+          "sr_w_l"
+        ],
+        "costMethod": "rate",
+        "rateKey": "paint_labor",
+        "qty": 10500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "bal_t_m",
+        "taskId": "task_jn19m1",
+        "room": "Balcony",
+        "name": "Wall tile",
+        "category": "Tiling",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 5,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "tile_material",
+        "qty": 100,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "bal_t_l",
+        "taskId": "task_jn19m1",
+        "room": "Balcony",
+        "name": "Wall tile",
+        "category": "Tiling",
+        "lineType": "Labor",
+        "workerType": "Tile Installer",
+        "phase": 1,
+        "stageId": 5,
+        "mandatory": true,
+        "durationDays": 3,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "tile_labor",
+        "qty": 100,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_to_m",
+        "taskId": "task_w74gmi",
+        "room": "Kids Bathroom",
+        "name": "Toilet seat",
+        "category": "Plumbing",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 9,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 6000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_to_l",
+        "taskId": "task_w74gmi",
+        "room": "Kids Bathroom",
+        "name": "Toilet seat",
+        "category": "Plumbing",
+        "lineType": "Labor",
+        "workerType": "Plumber",
+        "phase": 1,
+        "stageId": 9,
+        "mandatory": true,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [
+          "kb_ti_l"
+        ],
+        "costMethod": "custom",
+        "customAmount": 1200,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_bs_m",
+        "taskId": "task_4hywsr",
+        "room": "Kids Bathroom",
+        "name": "Wash basin",
+        "category": "Plumbing",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 9,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 4500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_bs_l",
+        "taskId": "task_4hywsr",
+        "room": "Kids Bathroom",
+        "name": "Wash basin",
+        "category": "Plumbing",
+        "lineType": "Labor",
+        "workerType": "Plumber",
+        "phase": 1,
+        "stageId": 9,
+        "mandatory": true,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [
+          "kb_ct_l",
+          "kb_ti_l"
+        ],
+        "costMethod": "custom",
+        "customAmount": 1800,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_ct_m",
+        "taskId": "task_4l0wzq",
+        "room": "Kids Bathroom",
+        "name": "Countertop",
+        "category": "Civil/Carpentry",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 5,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "granite_material",
+        "qty": 12,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_ct_l",
+        "taskId": "task_4l0wzq",
+        "room": "Kids Bathroom",
+        "name": "Countertop",
+        "category": "Civil/Carpentry",
+        "lineType": "Labor",
+        "workerType": "Mason / Carpenter",
+        "phase": 1,
+        "stageId": 5,
+        "mandatory": true,
+        "durationDays": 2,
+        "startOverride": null,
+        "dependsOn": [
+          "kb_ti_l"
+        ],
+        "costMethod": "rate",
+        "rateKey": "granite_labor",
+        "qty": 12,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_ti_m",
+        "taskId": "task_lxytuf",
+        "room": "Kids Bathroom",
+        "name": "New tiles",
+        "category": "Tiling",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 5,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "tile_material",
+        "qty": 85,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_ti_l",
+        "taskId": "task_lxytuf",
+        "room": "Kids Bathroom",
+        "name": "New tiles",
+        "category": "Tiling",
+        "lineType": "Labor",
+        "workerType": "Tile Installer",
+        "phase": 1,
+        "stageId": 5,
+        "mandatory": true,
+        "durationDays": 3,
+        "startOverride": null,
+        "dependsOn": [
+          "kr_leak_l"
+        ],
+        "costMethod": "rate",
+        "rateKey": "tile_labor",
+        "qty": 85,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_sh_m",
+        "taskId": "task_h9ogq6",
+        "room": "Kids Bathroom",
+        "name": "Shower partition",
+        "category": "Plumbing/Glasswork",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 6,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "rate",
+        "rateKey": "glass_material",
+        "qty": 15,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_sh_l",
+        "taskId": "task_h9ogq6",
+        "room": "Kids Bathroom",
+        "name": "Shower partition",
+        "category": "Plumbing/Glasswork",
+        "lineType": "Labor",
+        "workerType": "Glass Fabricator",
+        "phase": 1,
+        "stageId": 6,
+        "mandatory": true,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [
+          "kb_ti_l"
+        ],
+        "costMethod": "rate",
+        "rateKey": "glass_labor",
+        "qty": 15,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_led_m",
+        "taskId": "task_u5pdeg",
+        "room": "Kids Bathroom",
+        "name": "LED strip light",
+        "category": "Electrical",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 3,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 2500,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_led_l",
+        "taskId": "task_u5pdeg",
+        "room": "Kids Bathroom",
+        "name": "LED strip light",
+        "category": "Electrical",
+        "lineType": "Labor",
+        "workerType": "Electrician",
+        "phase": 1,
+        "stageId": 3,
+        "mandatory": true,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 800,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_fc_m",
+        "taskId": "task_cefpym",
+        "room": "Kids Bathroom",
+        "name": "Recreate false ceiling",
+        "category": "Civil/POP",
+        "lineType": "Material",
+        "workerType": "Material",
+        "phase": 1,
+        "stageId": 4,
+        "mandatory": true,
+        "durationDays": null,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 5000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_fc_l",
+        "taskId": "task_cefpym",
+        "room": "Kids Bathroom",
+        "name": "Recreate false ceiling",
+        "category": "Civil/POP",
+        "lineType": "Labor",
+        "workerType": "Mason / POP",
+        "phase": 1,
+        "stageId": 4,
+        "mandatory": true,
+        "durationDays": 2,
+        "startOverride": null,
+        "dependsOn": [
+          "kb_led_l"
+        ],
+        "costMethod": "custom",
+        "customAmount": 4000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      },
+      {
+        "id": "kb_mir",
+        "taskId": "kb_mir",
+        "room": "Kids Bathroom",
+        "name": "Mirror",
+        "category": "Furnishing",
+        "lineType": "Inclusive",
+        "workerType": "Carpenter/Vendor",
+        "phase": 1,
+        "stageId": 10,
+        "mandatory": true,
+        "durationDays": 1,
+        "startOverride": null,
+        "dependsOn": [],
+        "costMethod": "custom",
+        "customAmount": 3000,
+        "buyStatus": "To buy",
+        "status": "Not Started",
+        "notes": "",
+        "actualCost": null
+      }
+    ]
+  },
+  "tasks": [
+    {
+      "taskId": "mb_tv",
+      "room": "Master Bedroom",
+      "name": "TV unit with study section",
+      "category": "Carpentry",
+      "phase": 1,
+      "stageId": 10,
+      "mandatory": true,
+      "durationDays": 4,
+      "isSplit": false,
+      "totalCost": 78000,
+      "lineIds": [
+        "mb_tv"
+      ]
+    },
+    {
+      "taskId": "mb_chair",
+      "room": "Master Bedroom",
+      "name": "New study chair",
+      "category": "Furnishing",
+      "phase": 2,
+      "stageId": 10,
+      "mandatory": false,
+      "durationDays": 1,
+      "isSplit": false,
+      "totalCost": 4500,
+      "lineIds": [
+        "mb_chair"
+      ]
+    },
+    {
+      "taskId": "mb_hb",
+      "room": "Master Bedroom",
+      "name": "Repair bed headboard",
+      "category": "Carpentry",
+      "phase": 1,
+      "stageId": 10,
+      "mandatory": true,
+      "durationDays": 2,
+      "isSplit": false,
+      "totalCost": 9000,
+      "lineIds": [
+        "mb_hb"
+      ]
+    },
+    {
+      "taskId": "task_se057m",
+      "room": "Kids Room",
+      "name": "Fix wall leakage",
+      "category": "Plumbing",
+      "phase": 1,
+      "stageId": 2,
+      "mandatory": true,
+      "durationDays": 1,
+      "isSplit": true,
+      "totalCost": 4500,
+      "lineIds": [
+        "kr_leak_m",
+        "kr_leak_l"
+      ]
+    },
+    {
+      "taskId": "task_8q7ozi",
+      "room": "Kids Room",
+      "name": "Re-tile affected wall",
+      "category": "Tiling",
+      "phase": 1,
+      "stageId": 5,
+      "mandatory": true,
+      "durationDays": 2,
+      "isSplit": true,
+      "totalCost": 4080,
+      "lineIds": [
+        "kr_rt_m",
+        "kr_rt_l"
+      ]
+    },
+    {
+      "taskId": "kr_tbl",
+      "room": "Kids Room",
+      "name": "Custom kids study table",
+      "category": "Carpentry",
+      "phase": 1,
+      "stageId": 10,
+      "mandatory": true,
+      "durationDays": 3,
+      "isSplit": false,
+      "totalCost": 22000,
+      "lineIds": [
+        "kr_tbl"
+      ]
+    },
+    {
+      "taskId": "kr_ch",
+      "room": "Kids Room",
+      "name": "2 kids chairs",
+      "category": "Furnishing",
+      "phase": 2,
+      "stageId": 10,
+      "mandatory": false,
+      "durationDays": 1,
+      "isSplit": false,
+      "totalCost": 6000,
+      "lineIds": [
+        "kr_ch"
+      ]
+    },
+    {
+      "taskId": "task_zk8m97",
+      "room": "Kids Room",
+      "name": "3 light fixtures",
+      "category": "Electrical",
+      "phase": 1,
+      "stageId": 8,
+      "mandatory": true,
+      "durationDays": 1,
+      "isSplit": true,
+      "totalCost": 4500,
+      "lineIds": [
+        "kr_lt_m",
+        "kr_lt_l"
+      ]
+    },
+    {
+      "taskId": "gr_skirt",
+      "room": "Guest Room",
+      "name": "Wooden flooring skirting repair",
+      "category": "Carpentry",
+      "phase": 1,
+      "stageId": 10,
+      "mandatory": true,
+      "durationDays": 2,
+      "isSplit": false,
+      "totalCost": 6475,
+      "lineIds": [
+        "gr_skirt"
+      ]
+    },
+    {
+      "taskId": "task_l869np",
+      "room": "Guest Room",
+      "name": "Wall POP",
+      "category": "Civil/POP",
+      "phase": 1,
+      "stageId": 1,
+      "mandatory": true,
+      "durationDays": 3,
+      "isSplit": true,
+      "totalCost": 7150,
+      "lineIds": [
+        "gr_pop_m",
+        "gr_pop_l"
+      ]
+    },
+    {
+      "taskId": "task_y128ft",
+      "room": "Guest Room",
+      "name": "Change switchboards",
+      "category": "Electrical",
+      "phase": 2,
+      "stageId": 8,
+      "mandatory": false,
+      "durationDays": 1,
+      "isSplit": true,
+      "totalCost": 4000,
+      "lineIds": [
+        "gr_sw_m",
+        "gr_sw_l"
+      ]
+    },
+    {
+      "taskId": "sr_loft",
+      "room": "Study Room",
+      "name": "Panel on loft",
+      "category": "Carpentry",
+      "phase": 2,
+      "stageId": 10,
+      "mandatory": false,
+      "durationDays": 2,
+      "isSplit": false,
+      "totalCost": 12000,
+      "lineIds": [
+        "sr_loft"
+      ]
+    },
+    {
+      "taskId": "task_aidkrs",
+      "room": "Study Room",
+      "name": "Flooring",
+      "category": "Flooring",
+      "phase": 2,
+      "stageId": 5,
+      "mandatory": false,
+      "durationDays": 3,
+      "isSplit": true,
+      "totalCost": 22100,
+      "lineIds": [
+        "sr_fl_m",
+        "sr_fl_l"
+      ]
+    },
+    {
+      "taskId": "task_efw44z",
+      "room": "Study Room",
+      "name": "Wall repair + POP",
+      "category": "Civil/POP",
+      "phase": 1,
+      "stageId": 1,
+      "mandatory": true,
+      "durationDays": 3,
+      "isSplit": true,
+      "totalCost": 8250,
+      "lineIds": [
+        "sr_w_m",
+        "sr_w_l"
+      ]
+    },
+    {
+      "taskId": "lr_tv",
+      "room": "Living Room",
+      "name": "TV unit",
+      "category": "Carpentry",
+      "phase": 1,
+      "stageId": 10,
+      "mandatory": true,
+      "durationDays": 4,
+      "isSplit": false,
+      "totalCost": 94500,
+      "lineIds": [
+        "lr_tv"
+      ]
+    },
+    {
+      "taskId": "lr_cr",
+      "room": "Living Room",
+      "name": "Crockery unit",
+      "category": "Carpentry",
+      "phase": 1,
+      "stageId": 10,
+      "mandatory": true,
+      "durationDays": 4,
+      "isSplit": false,
+      "totalCost": 75000,
+      "lineIds": [
+        "lr_cr"
+      ]
+    },
+    {
+      "taskId": "lr_pn",
+      "room": "Living Room",
+      "name": "Paneling",
+      "category": "Carpentry",
+      "phase": 1,
+      "stageId": 10,
+      "mandatory": true,
+      "durationDays": 5,
+      "isSplit": false,
+      "totalCost": 60000,
+      "lineIds": [
+        "lr_pn"
+      ]
+    },
+    {
+      "taskId": "task_95jxbt",
+      "room": "Living Room",
+      "name": "Wall design",
+      "category": "Painting",
+      "phase": 1,
+      "stageId": 7,
+      "mandatory": true,
+      "durationDays": 2,
+      "isSplit": true,
+      "totalCost": 16000,
+      "lineIds": [
+        "lr_wd_m",
+        "lr_wd_l"
+      ]
+    },
+    {
+      "taskId": "task_f6n24h",
+      "room": "Overall (Whole House)",
+      "name": "Wall repairs",
+      "category": "Civil",
+      "phase": 1,
+      "stageId": 1,
+      "mandatory": true,
+      "durationDays": 4,
+      "isSplit": true,
+      "totalCost": 21000,
+      "lineIds": [
+        "ov_wall_m",
+        "ov_wall_l"
+      ]
+    },
+    {
+      "taskId": "task_tmrnue",
+      "room": "Overall (Whole House)",
+      "name": "POP as needed",
+      "category": "Civil/POP",
+      "phase": 1,
+      "stageId": 1,
+      "mandatory": true,
+      "durationDays": 3,
+      "isSplit": true,
+      "totalCost": 15500,
+      "lineIds": [
+        "ov_pop_m",
+        "ov_pop_l"
+      ]
+    },
+    {
+      "taskId": "task_5bql0o",
+      "room": "Overall (Whole House)",
+      "name": "Fresh paint",
+      "category": "Painting",
+      "phase": 1,
+      "stageId": 7,
+      "mandatory": true,
+      "durationDays": 6,
+      "isSplit": true,
+      "totalCost": 210000,
+      "lineIds": [
+        "ov_pt_m",
+        "ov_pt_l"
+      ]
+    },
+    {
+      "taskId": "task_jn19m1",
+      "room": "Balcony",
+      "name": "Wall tile",
+      "category": "Tiling",
+      "phase": 1,
+      "stageId": 5,
+      "mandatory": true,
+      "durationDays": 3,
+      "isSplit": true,
+      "totalCost": 17000,
+      "lineIds": [
+        "bal_t_m",
+        "bal_t_l"
+      ]
+    },
+    {
+      "taskId": "task_w74gmi",
+      "room": "Kids Bathroom",
+      "name": "Toilet seat",
+      "category": "Plumbing",
+      "phase": 1,
+      "stageId": 9,
+      "mandatory": true,
+      "durationDays": 1,
+      "isSplit": true,
+      "totalCost": 7200,
+      "lineIds": [
+        "kb_to_m",
+        "kb_to_l"
+      ]
+    },
+    {
+      "taskId": "task_4hywsr",
+      "room": "Kids Bathroom",
+      "name": "Wash basin",
+      "category": "Plumbing",
+      "phase": 1,
+      "stageId": 9,
+      "mandatory": true,
+      "durationDays": 1,
+      "isSplit": true,
+      "totalCost": 6300,
+      "lineIds": [
+        "kb_bs_m",
+        "kb_bs_l"
+      ]
+    },
+    {
+      "taskId": "task_4l0wzq",
+      "room": "Kids Bathroom",
+      "name": "Countertop",
+      "category": "Civil/Carpentry",
+      "phase": 1,
+      "stageId": 5,
+      "mandatory": true,
+      "durationDays": 2,
+      "isSplit": true,
+      "totalCost": 3960,
+      "lineIds": [
+        "kb_ct_m",
+        "kb_ct_l"
+      ]
+    },
+    {
+      "taskId": "task_lxytuf",
+      "room": "Kids Bathroom",
+      "name": "New tiles",
+      "category": "Tiling",
+      "phase": 1,
+      "stageId": 5,
+      "mandatory": true,
+      "durationDays": 3,
+      "isSplit": true,
+      "totalCost": 14450,
+      "lineIds": [
+        "kb_ti_m",
+        "kb_ti_l"
+      ]
+    },
+    {
+      "taskId": "task_h9ogq6",
+      "room": "Kids Bathroom",
+      "name": "Shower partition",
+      "category": "Plumbing/Glasswork",
+      "phase": 1,
+      "stageId": 6,
+      "mandatory": true,
+      "durationDays": 1,
+      "isSplit": true,
+      "totalCost": 12000,
+      "lineIds": [
+        "kb_sh_m",
+        "kb_sh_l"
+      ]
+    },
+    {
+      "taskId": "task_u5pdeg",
+      "room": "Kids Bathroom",
+      "name": "LED strip light",
+      "category": "Electrical",
+      "phase": 1,
+      "stageId": 3,
+      "mandatory": true,
+      "durationDays": 1,
+      "isSplit": true,
+      "totalCost": 3300,
+      "lineIds": [
+        "kb_led_m",
+        "kb_led_l"
+      ]
+    },
+    {
+      "taskId": "task_cefpym",
+      "room": "Kids Bathroom",
+      "name": "Recreate false ceiling",
+      "category": "Civil/POP",
+      "phase": 1,
+      "stageId": 4,
+      "mandatory": true,
+      "durationDays": 2,
+      "isSplit": true,
+      "totalCost": 9000,
+      "lineIds": [
+        "kb_fc_m",
+        "kb_fc_l"
+      ]
+    },
+    {
+      "taskId": "kb_mir",
+      "room": "Kids Bathroom",
+      "name": "Mirror",
+      "category": "Furnishing",
+      "phase": 1,
+      "stageId": 10,
+      "mandatory": true,
+      "durationDays": 1,
+      "isSplit": false,
+      "totalCost": 3000,
+      "lineIds": [
+        "kb_mir"
+      ]
+    }
+  ],
+  "schedule": {
+    "projectStart": "2026-09-21",
+    "projectEnd": "2026-10-08",
+    "tasks": {
+      "task_l869np": {
+        "start": "2026-09-21",
+        "end": "2026-09-23",
+        "dur": 3
+      },
+      "task_efw44z": {
+        "start": "2026-09-21",
+        "end": "2026-09-23",
+        "dur": 3
+      },
+      "task_f6n24h": {
+        "start": "2026-09-21",
+        "end": "2026-09-24",
+        "dur": 4
+      },
+      "task_tmrnue": {
+        "start": "2026-09-25",
+        "end": "2026-09-27",
+        "dur": 3
+      },
+      "task_se057m": {
+        "start": "2026-09-21",
+        "end": "2026-09-21",
+        "dur": 1
+      },
+      "task_u5pdeg": {
+        "start": "2026-09-21",
+        "end": "2026-09-21",
+        "dur": 1
+      },
+      "task_cefpym": {
+        "start": "2026-09-22",
+        "end": "2026-09-23",
+        "dur": 2
+      },
+      "task_8q7ozi": {
+        "start": "2026-09-22",
+        "end": "2026-09-23",
+        "dur": 2
+      },
+      "task_aidkrs": {
+        "start": "2026-09-21",
+        "end": "2026-09-23",
+        "dur": 3
+      },
+      "task_jn19m1": {
+        "start": "2026-09-21",
+        "end": "2026-09-23",
+        "dur": 3
+      },
+      "task_lxytuf": {
+        "start": "2026-09-22",
+        "end": "2026-09-24",
+        "dur": 3
+      },
+      "task_4l0wzq": {
+        "start": "2026-09-25",
+        "end": "2026-09-26",
+        "dur": 2
+      },
+      "task_h9ogq6": {
+        "start": "2026-09-25",
+        "end": "2026-09-25",
+        "dur": 1
+      },
+      "task_95jxbt": {
+        "start": "2026-09-25",
+        "end": "2026-09-26",
+        "dur": 2
+      },
+      "task_5bql0o": {
+        "start": "2026-09-28",
+        "end": "2026-10-03",
+        "dur": 6
+      },
+      "task_zk8m97": {
+        "start": "2026-09-21",
+        "end": "2026-09-21",
+        "dur": 1
+      },
+      "task_y128ft": {
+        "start": "2026-09-21",
+        "end": "2026-09-21",
+        "dur": 1
+      },
+      "task_w74gmi": {
+        "start": "2026-09-25",
+        "end": "2026-09-25",
+        "dur": 1
+      },
+      "task_4hywsr": {
+        "start": "2026-09-27",
+        "end": "2026-09-27",
+        "dur": 1
+      },
+      "mb_tv": {
+        "start": "2026-10-05",
+        "end": "2026-10-08",
+        "dur": 4
+      },
+      "mb_chair": {
+        "start": "2026-09-21",
+        "end": "2026-09-21",
+        "dur": 1
+      },
+      "mb_hb": {
+        "start": "2026-09-21",
+        "end": "2026-09-22",
+        "dur": 2
+      },
+      "kr_tbl": {
+        "start": "2026-09-21",
+        "end": "2026-09-23",
+        "dur": 3
+      },
+      "kr_ch": {
+        "start": "2026-09-21",
+        "end": "2026-09-21",
+        "dur": 1
+      },
+      "gr_skirt": {
+        "start": "2026-09-21",
+        "end": "2026-09-22",
+        "dur": 2
+      },
+      "sr_loft": {
+        "start": "2026-09-21",
+        "end": "2026-09-22",
+        "dur": 2
+      },
+      "lr_tv": {
+        "start": "2026-09-21",
+        "end": "2026-09-24",
+        "dur": 4
+      },
+      "lr_cr": {
+        "start": "2026-09-21",
+        "end": "2026-09-24",
+        "dur": 4
+      },
+      "lr_pn": {
+        "start": "2026-09-21",
+        "end": "2026-09-25",
+        "dur": 5
+      },
+      "kb_mir": {
+        "start": "2026-09-21",
+        "end": "2026-09-21",
+        "dur": 1
+      }
+    }
+  },
+  "suggestedOrder": [
+    {
+      "id": "gr_pop_m",
+      "room": "Guest Room",
+      "name": "Wall POP",
+      "lineType": "Material"
+    },
+    {
+      "id": "gr_pop_l",
+      "room": "Guest Room",
+      "name": "Wall POP",
+      "lineType": "Labor"
+    },
+    {
+      "id": "sr_w_m",
+      "room": "Study Room",
+      "name": "Wall repair + POP",
+      "lineType": "Material"
+    },
+    {
+      "id": "sr_w_l",
+      "room": "Study Room",
+      "name": "Wall repair + POP",
+      "lineType": "Labor"
+    },
+    {
+      "id": "ov_wall_m",
+      "room": "Overall (Whole House)",
+      "name": "Wall repairs",
+      "lineType": "Material"
+    },
+    {
+      "id": "ov_wall_l",
+      "room": "Overall (Whole House)",
+      "name": "Wall repairs",
+      "lineType": "Labor"
+    },
+    {
+      "id": "ov_pop_m",
+      "room": "Overall (Whole House)",
+      "name": "POP as needed",
+      "lineType": "Material"
+    },
+    {
+      "id": "ov_pop_l",
+      "room": "Overall (Whole House)",
+      "name": "POP as needed",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kr_leak_m",
+      "room": "Kids Room",
+      "name": "Fix wall leakage",
+      "lineType": "Material"
+    },
+    {
+      "id": "kr_leak_l",
+      "room": "Kids Room",
+      "name": "Fix wall leakage",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kb_led_m",
+      "room": "Kids Bathroom",
+      "name": "LED strip light",
+      "lineType": "Material"
+    },
+    {
+      "id": "kb_led_l",
+      "room": "Kids Bathroom",
+      "name": "LED strip light",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kb_fc_m",
+      "room": "Kids Bathroom",
+      "name": "Recreate false ceiling",
+      "lineType": "Material"
+    },
+    {
+      "id": "kb_fc_l",
+      "room": "Kids Bathroom",
+      "name": "Recreate false ceiling",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kr_rt_m",
+      "room": "Kids Room",
+      "name": "Re-tile affected wall",
+      "lineType": "Material"
+    },
+    {
+      "id": "kr_rt_l",
+      "room": "Kids Room",
+      "name": "Re-tile affected wall",
+      "lineType": "Labor"
+    },
+    {
+      "id": "sr_fl_m",
+      "room": "Study Room",
+      "name": "Flooring",
+      "lineType": "Material"
+    },
+    {
+      "id": "sr_fl_l",
+      "room": "Study Room",
+      "name": "Flooring",
+      "lineType": "Labor"
+    },
+    {
+      "id": "bal_t_m",
+      "room": "Balcony",
+      "name": "Wall tile",
+      "lineType": "Material"
+    },
+    {
+      "id": "bal_t_l",
+      "room": "Balcony",
+      "name": "Wall tile",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kb_ct_m",
+      "room": "Kids Bathroom",
+      "name": "Countertop",
+      "lineType": "Material"
+    },
+    {
+      "id": "kb_ti_l",
+      "room": "Kids Bathroom",
+      "name": "New tiles",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kb_ct_l",
+      "room": "Kids Bathroom",
+      "name": "Countertop",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kb_ti_m",
+      "room": "Kids Bathroom",
+      "name": "New tiles",
+      "lineType": "Material"
+    },
+    {
+      "id": "kb_sh_m",
+      "room": "Kids Bathroom",
+      "name": "Shower partition",
+      "lineType": "Material"
+    },
+    {
+      "id": "kb_sh_l",
+      "room": "Kids Bathroom",
+      "name": "Shower partition",
+      "lineType": "Labor"
+    },
+    {
+      "id": "lr_wd_m",
+      "room": "Living Room",
+      "name": "Wall design",
+      "lineType": "Material"
+    },
+    {
+      "id": "lr_wd_l",
+      "room": "Living Room",
+      "name": "Wall design",
+      "lineType": "Labor"
+    },
+    {
+      "id": "ov_pt_m",
+      "room": "Overall (Whole House)",
+      "name": "Fresh paint",
+      "lineType": "Material"
+    },
+    {
+      "id": "ov_pt_l",
+      "room": "Overall (Whole House)",
+      "name": "Fresh paint",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kr_lt_m",
+      "room": "Kids Room",
+      "name": "3 light fixtures",
+      "lineType": "Material"
+    },
+    {
+      "id": "kr_lt_l",
+      "room": "Kids Room",
+      "name": "3 light fixtures",
+      "lineType": "Labor"
+    },
+    {
+      "id": "gr_sw_m",
+      "room": "Guest Room",
+      "name": "Change switchboards",
+      "lineType": "Material"
+    },
+    {
+      "id": "gr_sw_l",
+      "room": "Guest Room",
+      "name": "Change switchboards",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kb_to_m",
+      "room": "Kids Bathroom",
+      "name": "Toilet seat",
+      "lineType": "Material"
+    },
+    {
+      "id": "kb_to_l",
+      "room": "Kids Bathroom",
+      "name": "Toilet seat",
+      "lineType": "Labor"
+    },
+    {
+      "id": "kb_bs_m",
+      "room": "Kids Bathroom",
+      "name": "Wash basin",
+      "lineType": "Material"
+    },
+    {
+      "id": "kb_bs_l",
+      "room": "Kids Bathroom",
+      "name": "Wash basin",
+      "lineType": "Labor"
+    },
+    {
+      "id": "mb_tv",
+      "room": "Master Bedroom",
+      "name": "TV unit with study section",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "mb_chair",
+      "room": "Master Bedroom",
+      "name": "New study chair",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "mb_hb",
+      "room": "Master Bedroom",
+      "name": "Repair bed headboard",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "kr_tbl",
+      "room": "Kids Room",
+      "name": "Custom kids study table",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "kr_ch",
+      "room": "Kids Room",
+      "name": "2 kids chairs",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "gr_skirt",
+      "room": "Guest Room",
+      "name": "Wooden flooring skirting repair",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "sr_loft",
+      "room": "Study Room",
+      "name": "Panel on loft",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "lr_tv",
+      "room": "Living Room",
+      "name": "TV unit",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "lr_cr",
+      "room": "Living Room",
+      "name": "Crockery unit",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "lr_pn",
+      "room": "Living Room",
+      "name": "Paneling",
+      "lineType": "Inclusive"
+    },
+    {
+      "id": "kb_mir",
+      "room": "Kids Bathroom",
+      "name": "Mirror",
+      "lineType": "Inclusive"
+    }
+  ],
+  "estimate": {
+    "total": 760765,
+    "mandatory": 712165,
+    "optional": 48600,
+    "materials": 235820,
+    "byRoom": [
+      [
+        "Overall (Whole House)",
+        246500
+      ],
+      [
+        "Living Room",
+        245500
+      ],
+      [
+        "Master Bedroom",
+        91500
+      ],
+      [
+        "Kids Bathroom",
+        59210
+      ],
+      [
+        "Study Room",
+        42350
+      ],
+      [
+        "Kids Room",
+        41080
+      ],
+      [
+        "Guest Room",
+        17625
+      ],
+      [
+        "Balcony",
+        17000
+      ]
+    ],
+    "byTradeBucketed": [
+      [
+        "Carpenter",
+        371435
+      ],
+      [
+        "Material",
+        235820
+      ],
+      [
+        "Painter",
+        101500
+      ],
+      [
+        "Mason / Civil",
+        33200
+      ],
+      [
+        "Tiling",
+        8360
+      ],
+      [
+        "Plumber",
+        5000
+      ],
+      [
+        "Electrician",
+        3200
+      ],
+      [
+        "Glass",
+        2250
+      ]
+    ],
+    "byTradeRaw": [
+      [
+        "Carpenter",
+        356975
+      ],
+      [
+        "Material",
+        235820
+      ],
+      [
+        "Painter",
+        101500
+      ],
+      [
+        "Mason / POP",
+        18000
+      ],
+      [
+        "Carpenter/Vendor",
+        13500
+      ],
+      [
+        "Mason",
+        10000
+      ],
+      [
+        "Tile Installer",
+        8360
+      ],
+      [
+        "Flooring Contractor",
+        5200
+      ],
+      [
+        "Plumber",
+        5000
+      ],
+      [
+        "Electrician",
+        3200
+      ],
+      [
+        "Glass Fabricator",
+        2250
+      ],
+      [
+        "Mason / Carpenter",
+        960
+      ]
+    ],
+    "byPhase": [
+      [
+        "Phase 1 — Now",
+        712165
+      ],
+      [
+        "Phase 2 — Next",
+        48600
+      ]
+    ]
+  },
+  "materialsPlan": {
+    "lines": [
+      {
+        "lineId": "kr_leak_m",
+        "needBy": "2026-09-21",
+        "qty": null,
+        "unit": "",
+        "cost": 2500,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kr_rt_m",
+        "needBy": "2026-09-22",
+        "qty": 24,
+        "unit": "sqft",
+        "cost": 3120,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kr_lt_m",
+        "needBy": "2026-09-21",
+        "qty": 3,
+        "unit": "point",
+        "cost": 3600,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "gr_pop_m",
+        "needBy": "2026-09-21",
+        "qty": 130,
+        "unit": "sqft",
+        "cost": 3900,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "gr_sw_m",
+        "needBy": "2026-09-21",
+        "qty": null,
+        "unit": "",
+        "cost": 2500,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "sr_fl_m",
+        "needBy": "2026-09-21",
+        "qty": 130,
+        "unit": "sqft",
+        "cost": 16900,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "sr_w_m",
+        "needBy": "2026-09-21",
+        "qty": 150,
+        "unit": "sqft",
+        "cost": 4500,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "lr_wd_m",
+        "needBy": "2026-09-25",
+        "qty": null,
+        "unit": "",
+        "cost": 9000,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "ov_wall_m",
+        "needBy": "2026-09-21",
+        "qty": null,
+        "unit": "",
+        "cost": 11000,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "ov_pop_m",
+        "needBy": "2026-09-25",
+        "qty": null,
+        "unit": "",
+        "cost": 8500,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "ov_pt_m",
+        "needBy": "2026-09-28",
+        "qty": 10500,
+        "unit": "sqft",
+        "cost": 115500,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "bal_t_m",
+        "needBy": "2026-09-21",
+        "qty": 100,
+        "unit": "sqft",
+        "cost": 13000,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kb_to_m",
+        "needBy": "2026-09-25",
+        "qty": null,
+        "unit": "",
+        "cost": 6000,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kb_bs_m",
+        "needBy": "2026-09-27",
+        "qty": null,
+        "unit": "",
+        "cost": 4500,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kb_ct_m",
+        "needBy": "2026-09-25",
+        "qty": 12,
+        "unit": "sqft",
+        "cost": 3000,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kb_ti_m",
+        "needBy": "2026-09-22",
+        "qty": 85,
+        "unit": "sqft",
+        "cost": 11050,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kb_sh_m",
+        "needBy": "2026-09-25",
+        "qty": 15,
+        "unit": "sqft",
+        "cost": 9750,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kb_led_m",
+        "needBy": "2026-09-21",
+        "qty": null,
+        "unit": "",
+        "cost": 2500,
+        "buyStatus": "To buy"
+      },
+      {
+        "lineId": "kb_fc_m",
+        "needBy": "2026-09-22",
+        "qty": null,
+        "unit": "",
+        "cost": 5000,
+        "buyStatus": "To buy"
+      }
+    ],
+    "total": 235820,
+    "toBuyCost": 235820,
+    "toBuyCount": 19,
+    "ordered": 0,
+    "delivered": 0
+  }
+}

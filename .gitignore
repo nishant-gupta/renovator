@@ -1,0 +1,30 @@
+# Secrets / local machine config — never commit real values.
+.env
+.env.local
+.env.*.local
+
+# Python (backend)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node (frontend)
+node_modules/
+dist/
+
+# Local app data (RENOVATOR_DATA_DIR default) if it ever ends up in-tree.
+.renovator/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+
+# Impeccable design-hook's local session cache (machine-specific paths,
+# not project config) — config.json (suppression rules) stays tracked.
+**/.impeccable/hook.cache.json
+
+# Loose local export artifacts — not source, may contain real personal data.
+*.xlsx

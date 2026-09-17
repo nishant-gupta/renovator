@@ -1,0 +1,54 @@
+# Renovator frontend
+
+React + TypeScript + Vite, talking to the backend (`../backend`) purely over its REST API. `Renovation_Planner_v2.html` is reference material for behavior only — nothing here embeds or extends it. Full design: [`../docs/agentic-renovator-design.md`](../docs/agentic-renovator-design.md) §4.10.
+
+## Setup
+
+```bash
+cd frontend
+npm install
+cp .env.example .env   # points at the backend; defaults to http://localhost:8000
+```
+
+Run the backend first (`cd ../backend && uv run uvicorn renovator.app:app --port 8000`), then:
+
+```bash
+npm run dev      # http://localhost:5173
+npm run build    # type-checks (tsc -b) and produces dist/
+npm run lint      # oxlint
+```
+
+## Layout
+
+- `src/api/types.ts` — mirrors the backend's response shapes exactly (field names kept snake_case, matching the JSON on the wire, rather than translated to camelCase — no mapping layer to keep in sync).
+- `src/api/client.ts` — typed fetch wrapper. Throws `ApiError` with `.status`; `status === 409` (`.needsConfirmation`) means the backend wants confirmation before a destructive change (mirrors the reference app's `confirm()` dialogs) — re-issue the same call with `confirm=true` if the user agrees. `status === 400` is a hard validation reject.
+- `src/api/hooks.ts` — a small `useFetch` hook (fetch on mount, `reload()` to refetch after a mutation).
+- `src/components/` — `Rail` (left nav, feature.md §2 — "Projects" is one of its tabs, not a separate switcher), `TopBar` (read-only "Project: X · Switch project" context shown above every tab except Projects), `ProjectEditor` (the create/edit-project modal: name, project timing, rate card, delete), `Menu` (generic dropdown action list; `variant="icon"` trims it to a compact icon-btn trigger for tight table rows), `TransferMenu` (the "Copy to project…"/"Move to project…" pair, reused by the Tasks bulk bar, the task editor, and Setup's Phases card), `ChatPanel` (Phase 7 — the collapsible chat dock; a 💬 floating toggle when closed; Phase 8 added a 📷 room-photo attach button), `Stat`/`StatRow` (stat-tile rows on Materials/Estimate/Track), `Modal` (shared overlay/panel for the task editor, template picker, and project editor).
+- `src/tabs/` — one file per tab, including `ProjectsTab.tsx` (global defaults + the project list/create/open/edit surface), plus `TaskEditor.tsx` (the single/split task editor modal), `TemplatePicker.tsx` (feature.md §4.2's template grid), and the three Schedule views — `GanttView.tsx`, `AgendaView.tsx`, `BoardView.tsx` — orchestrated by `ScheduleTab.tsx`.
+- `src/trade.ts` — a direct TS port of the reference app's `tradeBucket()` classifier, so the Gantt bars, agenda badges, board card borders, and legend all colour the same trade consistently.
+- `src/dates.ts` — local-date helpers (noon-local `Date`s, matching the backend's date-only semantics) shared by the Gantt/agenda views' day math.
+- `src/confirm.ts` — the shared `withConfirmRetry` helper (retry a mutation with `confirm=true` after a native `confirm()` on a 409), used by every tab/modal that can hit a `ConfirmationRequired` response.
+
+## Status — Phases 6, 7, and 8 complete
+
+`App.tsx` no longer hardcodes a single project id — it fetches `GET /projects` on load, remembers the active project in `localStorage`, and falls back to the first available project (or a "no projects yet" empty state, forced onto the Projects tab) otherwise. **Projects is a tab**, not a sidebar switcher: opening it shows a "Global defaults" card (timing flags + a starter rate card that seed every *new* project — editing these never touches a project that already exists) above a table of every project, each expandable for its timestamps, with "Open" (make it active, jump to Tasks) and "✎ Edit" (the `ProjectEditor` modal — name, per-project timing, rate card, delete) actions, plus "+ New project". Every other tab shows a small `TopBar` above its content with the active project's name and a "Switch project" link back to Projects — that tab is now the only place a project is selected. Copy/move-to-project is wired in three places, all via the shared `TransferMenu`: the Tasks bulk-action bar (the current selection), the task editor's footer (just that task), and Setup's Phases card (a whole phase's tasks, via a compact icon-triggered `Menu`).
+
+Every tab from feature.md §3-§9 is fully wired against the real backend, direct-manipulation only, no LLM involved:
+
+- **Setup** — rooms, phases, stages; confirm-before-delete flow. Project timing and the rate card moved to the Projects tab's `ProjectEditor` (they're the settings with a global-default concept; rooms/phases/stages don't have one).
+- **Tasks** — add/edit/delete a task (single or split Material+Labor) via `TaskEditor.tsx`, including the dependency checklist (feature.md §4.1 — Material lines don't show it, the Labor side of a split task carries it); the template picker (`TemplatePicker.tsx`); a bulk-select bar (mark mandatory/optional, move to phase/stage, delete) matching feature.md §4.3.
+- **Materials** — inline buy-status (select) and vendor/note (text) editing per line, via the lightweight `PATCH /lines/{line_id}` route rather than the full task-update one.
+- **Track** — inline status + actual-cost editing per line, with split tasks expandable to edit Material/Labor separately (feature.md §8). Fetches `getTasks` for the editable rows (which has line ids) and `getTrack` only for the stat tiles (which doesn't).
+- **Estimate** — read-only; renders real, live backend data (nothing to edit here per feature.md §7 — fix costs at the source).
+- **Schedule** — all three views (feature.md §5.1-§5.3): Timeline (Gantt), By-date (agenda), and Board (kanban with drag-to-reassign-stage, drag-header-to-reorder-stages, "+ Add here", and a suggested-execution-order toggle). Clicking any task anywhere opens the same `TaskEditor`. One known simplification: Board cards don't show the reference app's "after: X" dependency hint, since that needs per-line `depends_on` data the schedule endpoint's task-level rows don't carry (dependency *editing* is fully wired in the task editor itself, just not surfaced there).
+- **Excel export/import** — wired at the sidebar (`Rail.tsx`): Export triggers a direct download via the `Content-Disposition` header; Import uploads through a hidden file input with the same confirm-before-replace flow as everything else, then reloads the page.
+
+**Phase 7 — agentic chat + live canvas updates.** `ChatPanel` is a collapsible dock (floating 💬 toggle when closed) wired to `POST /projects/{id}/chat`. `api/client.ts::streamChat` hand-parses the SSE body from a `fetch()` `POST` (the standard `EventSource` only supports `GET`), calling back with each event as it arrives: `tool_call`/`tool_result` render as small monospace lines, `message` as an assistant bubble, and `interrupt` as a card with Approve/Reject buttons that resume the same turn via `{"resume": {"decisions": [...]}}`. Separately, `api/client.ts::subscribePlanEvents` opens a real `EventSource` against `GET /projects/{id}/plan-events` and calls back on every `changed` event; `App.tsx` turns that into one `planVersion` counter threaded into every tab's `useFetch` deps alongside `projectId`, so a tab picks up an externally-sourced change (chat, or in principle another browser tab) without losing its own local UI state (open modals, row selection) — `TasksTab`'s local optimistic-update override is cleared on exactly that signal, adjusted during render rather than in an effect (React's documented pattern for "reset state when a prop changes," and what keeps `oxlint`'s `set-state-in-effect` check clean). On mount, `ChatPanel` calls `api.getChatHistory(projectId)` (`GET /projects/{id}/chat/history`) and replays every returned event through the same `handleEvent` used for live streaming, so a page reload recovers the full transcript — and, if the thread was left mid-interrupt, the Approve/Reject card just reappears as the last replayed event, with no separate recovery UI needed.
+
+**Phase 8 — room-photo intake + guardrails.** A 📷 button next to the chat input opens a file picker; `attachPhoto()` reads it via `FileReader.readAsDataURL` (client-side capped at 8MB) and shows a small thumbnail preview above the input row before sending. `streamChat`'s body grew an optional `image` field (the data URL) sent alongside `message`; a photo can be sent with no caption at all (the backend fills in a default prompt). The user's own chat bubble shows the actual photo for a live send (the data URL is still in memory), but a photo recovered via `/chat/history` on reload only ever shows a "📷 photo" placeholder — the backend never echoes the original bytes back out (`has_image` is a flag, not the image), which is a real, disclosed limitation, not an oversight. The rest of Phase 8 (draft-only Intake, `update_rate` gating, research-result sanitization) is backend-only; see `backend/README.md`.
+
+## Things worth knowing before touching this further
+
+**No interactive browser has been available while building this**, so the rendered UI has not been visually confirmed end-to-end by me. This already caused one real bug that slipped through: the first pass shipped without `import "./App.css"` in `App.tsx`, so every style was silently dropped — the build succeeded and every API check passed anyway, because neither catches a missing CSS import. It was only caught when the user actually looked at the page. Treat "build succeeds + API shapes match" as necessary, not sufficient — a visual pass in a real browser is still owed for everything built so far, and **especially** for the Gantt/agenda/board views (drag-and-drop, absolute positioning of bars, sticky-column scrolling) and now the chat dock (its `position: fixed` layout was never checked against `.main`'s content for overlap on a real, narrow viewport, and neither was the photo thumbnail/attach button layout added in Phase 8) — exactly the kind of thing no automated check in this environment can verify. The chat *protocol* itself (SSE parsing, tool-call/interrupt/resume events, `planVersion`-driven refetching, and — Phase 8 — the multimodal image content actually reaching the model) was validated end-to-end against the real Anthropic API and a real chunked-HTTP connection — see `backend/README.md` — but only at the network/data level, never rendered.
+
+**The `default` project is not a fixture — it's the user's real plan.** Manual verification against `default` turned up hand-entered rooms, rates, and task names that were clearly not anything generated by this build process — the user had been using the Tasks tab as it was completed. Any further manual/API-level verification should use a disposable scratch project id and delete its `~/.renovator/<id>.*` files afterward, never touch `default`.

@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renovation Planner</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#E7EBE4;
+    --surface:#FFFFFF;
+    --surface-2:#F3F6F0;
+    --surface-3:#ECF0E8;
+    --ink:#1C2723;
+    --ink-soft:#5C665E;
+    --ink-faint:#8A938B;
+    --line:#D6DCD1;
+    --line-strong:#BCC5B7;
+    --brand:#0F5C63;
+    --brand-2:#0C4A50;
+    --brand-tint:#E0EDEE;
+    --action:#C77A0F;
+    --action-2:#AC680B;
+    --action-tint:#FAECD6;
+    --danger:#B23A2E;
+    --danger-tint:#F5E2DF;
+    --ok:#3C7A46;
+    --ok-tint:#E3EFE2;
+    /* trade palette — meaningful, used across schedule + materials */
+    --t-mason:#8A6D3B;    --t-mason-t:#EFE7D6;
+    --t-plumber:#2F6DB0;  --t-plumber-t:#DEE9F5;
+    --t-electric:#B8890F; --t-electric-t:#F5EBCE;
+    --t-tiling:#4E8A6E;   --t-tiling-t:#DEECE4;
+    --t-painter:#8E5CA6;  --t-painter-t:#EBE0F1;
+    --t-carpenter:#A85D22;--t-carpenter-t:#F3E3D4;
+    --t-glass:#2E9AA1;    --t-glass-t:#D8EEEF;
+    --t-material:#6B7280; --t-material-t:#E7E9EC;
+    --t-other:#556;       --t-other-t:#E5E7EA;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,system-ui,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,'SF Mono','Roboto Mono',Consolas,monospace;
+    --shadow:0 1px 2px rgba(28,39,35,.06),0 2px 8px rgba(28,39,35,.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;}
+  body{-webkit-font-smoothing:antialiased;}
+  .app{display:flex;min-height:100vh;}
+
+  /* ---------- Rail ---------- */
+  .rail{
+    width:210px;flex:0 0 210px;background:var(--brand);color:#DCEBEC;
+    display:flex;flex-direction:column;padding:18px 12px;position:sticky;top:0;height:100vh;
+  }
+  .brand{display:flex;align-items:center;gap:9px;padding:0 6px 2px;}
+  .brand .mark{width:26px;height:26px;border-radius:6px;background:var(--action);position:relative;flex:0 0 26px;}
+  .brand .mark::before{content:"";position:absolute;inset:6px 6px auto 6px;height:3px;background:#2A1B02;border-radius:2px;box-shadow:0 5px 0 #2A1B02,0 10px 0 #2A1B02;}
+  .brand .name{font-size:15px;font-weight:700;color:#fff;line-height:1.15;letter-spacing:-.01em;}
+  .brand .name span{display:block;font-size:11px;font-weight:500;color:#9FC4C6;}
+  .rail-nav{margin-top:18px;display:flex;flex-direction:column;gap:1px;}
+  .navbtn{all:unset;cursor:pointer;padding:9px 11px;border-radius:6px;font-size:13.5px;color:#BFD8D9;display:flex;align-items:center;gap:10px;}
+  .navbtn .ic{width:16px;text-align:center;font-size:14px;opacity:.9;}
+  .navbtn:hover{background:rgba(255,255,255,.08);color:#fff;}
+  .navbtn.active{background:#fff;color:var(--brand-2);font-weight:600;}
+  .rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;padding-top:12px;}
+  .rail-foot .startbox{background:rgba(255,255,255,.08);border-radius:6px;padding:8px 10px;}
+  .rail-foot .startbox label{display:block;font-size:10.5px;color:#9FC4C6;margin-bottom:4px;}
+  .rail-foot .startbox input{width:100%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.95);border-radius:4px;padding:5px 6px;font-family:var(--mono);font-size:12px;color:var(--ink);}
+  .railact{all:unset;cursor:pointer;text-align:left;padding:8px 11px;border-radius:6px;font-size:12.5px;color:#CFE3E4;background:rgba(255,255,255,.07);display:flex;align-items:center;gap:8px;}
+  .railact:hover{background:rgba(255,255,255,.14);color:#fff;}
+  .railact.primary{background:var(--action);color:#2A1B02;font-weight:700;}
+  .railact.primary:hover{background:var(--action-2);}
+  .savenote{font-size:10.5px;color:#8FB6B8;padding:2px 4px;font-family:var(--mono);}
+
+  main{flex:1;min-width:0;padding:26px 34px 70px;max-width:1300px;}
+  .page-h{font-size:23px;font-weight:700;letter-spacing:-.02em;margin:0 0 3px;}
+  .page-sub{color:var(--ink-soft);font-size:13px;margin:0 0 20px;max-width:680px;line-height:1.5;}
+
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .between{justify-content:space-between;}
+  .spacer{flex:1;}
+
+  /* ---------- Chips / tags ---------- */
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;border:1px solid var(--line-strong);background:var(--surface);font-size:12.5px;cursor:pointer;color:var(--ink);}
+  .chip:hover{border-color:var(--brand);}
+  .chip.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .chip.ghost{border-style:dashed;color:var(--ink-soft);}
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--surface);}
+  .seg button{all:unset;cursor:pointer;padding:7px 14px;font-size:12.5px;color:var(--ink-soft);}
+  .seg button.active{background:var(--brand);color:#fff;font-weight:600;}
+  .seg button+button{border-left:1px solid var(--line);}
+
+  .tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600;}
+  .tag-material{background:var(--t-material-t);color:#4b5563;}
+  .tag-labor{background:var(--brand-tint);color:var(--brand-2);}
+  .tag-inclusive{background:var(--ok-tint);color:var(--ok);}
+  .tag-mand{background:var(--danger-tint);color:var(--danger);}
+  .tag-opt{background:var(--surface-3);color:var(--ink-soft);}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:5px;font-size:11px;background:var(--surface-3);color:var(--ink-soft);}
+  .dot{width:8px;height:8px;border-radius:2px;display:inline-block;flex:0 0 8px;}
+
+  /* ---------- Buttons ---------- */
+  .btn{all:unset;cursor:pointer;padding:8px 15px;border-radius:7px;font-size:13px;font-weight:600;background:var(--action);color:#2A1B02;display:inline-flex;align-items:center;gap:7px;}
+  .btn:hover{background:var(--action-2);}
+  .btn-brand{background:var(--brand);color:#fff;}
+  .btn-brand:hover{background:var(--brand-2);}
+  .btn-ghost{all:unset;cursor:pointer;padding:8px 14px;border-radius:7px;font-size:13px;border:1px solid var(--line-strong);color:var(--ink);background:var(--surface);display:inline-flex;align-items:center;gap:6px;}
+  .btn-ghost:hover{background:var(--surface-2);border-color:var(--brand);}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .btn-danger{all:unset;cursor:pointer;padding:5px 10px;border-radius:6px;font-size:12px;color:var(--danger);}
+  .btn-danger:hover{background:var(--danger-tint);}
+  .iconbtn{all:unset;cursor:pointer;padding:4px 7px;border-radius:5px;font-size:13px;color:var(--ink-soft);}
+  .iconbtn:hover{background:var(--surface-3);color:var(--ink);}
+
+  /* ---------- Cards / stats ---------- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow);}
+  .statrow{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 16px;min-width:140px;flex:1;box-shadow:var(--shadow);}
+  .stat .k{font-size:11.5px;color:var(--ink-soft);margin-bottom:5px;}
+  .stat .v{font-size:24px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .stat .v.sm{font-size:19px;}
+  .stat .note{font-size:11px;color:var(--ink-faint);margin-top:5px;}
+
+  .sect{font-size:12px;font-weight:700;color:var(--ink-soft);letter-spacing:.02em;margin:24px 0 10px;display:flex;align-items:center;gap:8px;}
+  .sect::after{content:"";flex:1;height:1px;background:var(--line);}
+  .sect:first-child{margin-top:0;}
+
+  /* ---------- Tables ---------- */
+  table.dt{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);}
+  table.dt th{text-align:left;font-size:11px;color:var(--ink-soft);font-weight:700;padding:9px 12px;border-bottom:1px solid var(--line-strong);background:var(--surface-2);}
+  table.dt td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  table.dt tr:last-child td{border-bottom:none;}
+  table.dt tbody tr:hover{background:var(--surface-2);}
+  .num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;}
+  .grp td{background:var(--brand-tint);font-weight:700;color:var(--brand-2);font-size:12px;padding:7px 12px;}
+  tr.sel td{background:var(--action-tint);}
+
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    font-family:var(--sans);font-size:13px;padding:7px 9px;border:1px solid var(--line-strong);border-radius:6px;background:#fff;color:var(--ink);width:100%;
+  }
+  input[type=number]{font-family:var(--mono);}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand);}
+  .fl{display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:4px;font-weight:600;}
+  .field{margin-bottom:12px;}
+  .frow{display:flex;gap:12px;}
+  .frow .field{flex:1;}
+  .radios{display:flex;gap:14px;font-size:13px;align-items:center;flex-wrap:wrap;}
+  .radios label{display:flex;align-items:center;gap:5px;cursor:pointer;}
+
+  /* ---------- Bars ---------- */
+  .bar-row{display:grid;grid-template-columns:200px 1fr 96px;gap:10px;align-items:center;font-size:12.5px;margin-bottom:7px;}
+  .bar-track{background:var(--surface-3);border-radius:4px;height:10px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;}
+  .bar-val{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;}
+
+  /* ---------- Board (drag/drop) ---------- */
+  .board{display:flex;gap:14px;overflow-x:auto;padding-bottom:12px;}
+  .col{flex:0 0 258px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px;}
+  .col.drop{outline:2px dashed var(--brand);outline-offset:-4px;}
+  .col h3{font-size:12.5px;margin:0;color:var(--brand-2);font-weight:700;}
+  .col .ctot{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin:2px 0 9px;}
+  .tcard{background:#fff;border:1px solid var(--line);border-left:4px solid var(--t-other);border-radius:7px;padding:8px 10px;margin-bottom:7px;cursor:pointer;box-shadow:0 1px 1px rgba(0,0,0,.03);}
+  .tcard:hover{border-color:var(--line-strong);box-shadow:var(--shadow);}
+  .tcard .tn{font-size:12.5px;font-weight:600;margin-bottom:2px;}
+  .tcard .tr{font-size:11px;color:var(--ink-soft);}
+  .tcard .tc{font-family:var(--mono);font-size:11.5px;margin-top:3px;}
+  .tcard .tdep{margin-top:5px;font-size:10px;color:var(--danger);background:var(--danger-tint);padding:2px 6px;border-radius:4px;}
+  .tcard[draggable=true]:active{cursor:grabbing;}
+
+  /* ---------- Gantt ---------- */
+  .gantt-wrap{border:1px solid var(--line);border-radius:10px;overflow:auto;background:var(--surface);box-shadow:var(--shadow);max-height:70vh;}
+  .gantt{position:relative;font-size:11px;}
+  .g-head{display:flex;position:sticky;top:0;z-index:5;background:var(--surface-2);border-bottom:1px solid var(--line-strong);}
+  .g-lbl-col{flex:0 0 210px;position:sticky;left:0;z-index:6;background:var(--surface-2);border-right:1px solid var(--line-strong);padding:6px 10px;font-weight:700;color:var(--ink-soft);}
+  .g-months{display:flex;}
+  .g-month{border-right:1px solid var(--line-strong);padding:3px 8px;font-weight:700;color:var(--ink-soft);white-space:nowrap;}
+  .g-days{display:flex;}
+  .g-day{flex:0 0 auto;text-align:center;border-right:1px solid var(--line);color:var(--ink-faint);padding:2px 0;font-family:var(--mono);}
+  .g-day.we{background:var(--surface-3);}
+  .g-day.today{background:var(--action-tint);color:var(--action-2);font-weight:700;}
+  .g-body{position:relative;}
+  .g-stagehdr{display:flex;background:var(--brand-tint);border-bottom:1px solid var(--line);}
+  .g-stagehdr .g-lbl-col{background:var(--brand-tint);color:var(--brand-2);font-weight:700;}
+  .g-stagehdr .g-grid{flex:1;}
+  .g-taskrow{display:flex;border-bottom:1px solid var(--line);min-height:30px;}
+  .g-taskrow:hover .g-lbl-col{background:var(--surface-2);}
+  .g-tasklbl{flex:0 0 210px;position:sticky;left:0;z-index:4;background:var(--surface);border-right:1px solid var(--line-strong);padding:5px 10px;display:flex;align-items:center;gap:6px;cursor:pointer;overflow:hidden;}
+  .g-tasklbl .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;}
+  .g-tasklbl .rm{color:var(--ink-faint);font-size:10.5px;}
+  .g-lane{position:relative;flex:1;}
+  .g-weekend{position:absolute;top:0;bottom:0;background:var(--surface-3);opacity:.6;}
+  .g-todayline{position:absolute;top:0;bottom:0;width:2px;background:var(--action);z-index:3;}
+  .g-bar{position:absolute;top:5px;height:20px;border-radius:5px;display:flex;align-items:center;padding:0 7px;color:#fff;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+  .g-bar:hover{filter:brightness(1.06);box-shadow:0 2px 6px rgba(0,0,0,.25);}
+  .g-bar .barlbl{overflow:hidden;text-overflow:ellipsis;}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin:10px 0 4px;}
+  .legend .li{display:inline-flex;align-items:center;gap:5px;}
+
+  /* ---------- Agenda ---------- */
+  .agwk{margin-bottom:14px;}
+  .agwk-h{font-size:12px;font-weight:700;color:var(--brand-2);background:var(--brand-tint);padding:6px 12px;border-radius:7px 7px 0 0;border:1px solid var(--line);}
+  .agday{display:flex;gap:12px;border:1px solid var(--line);border-top:none;padding:9px 12px;background:var(--surface);}
+  .agday:last-child{border-radius:0 0 7px 7px;}
+  .agday .d{flex:0 0 84px;font-family:var(--mono);font-size:12px;color:var(--ink-soft);}
+  .agday .d .wd{color:var(--ink-faint);font-size:10.5px;}
+  .agday.we .d{color:var(--ink-faint);}
+  .agday .body{flex:1;min-width:0;}
+  .agtask{font-size:12.5px;padding:2px 0;display:flex;align-items:center;gap:7px;}
+  .agtask .start{font-size:9.5px;font-weight:700;color:var(--ok);background:var(--ok-tint);padding:1px 5px;border-radius:3px;}
+  .agtask .cont{font-size:9.5px;color:var(--ink-faint);}
+  .agtrades{margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;}
+
+  .empty{color:var(--ink-soft);font-size:13px;padding:22px;text-align:center;border:1px dashed var(--line-strong);border-radius:10px;background:var(--surface);}
+
+  /* ---------- Modal ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(20,26,22,.5);display:flex;align-items:flex-start;justify-content:center;z-index:100;overflow-y:auto;padding:26px 16px;animation:fade .12s ease;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .modal{background:#fff;width:620px;max-width:100%;border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 52px);box-shadow:0 12px 40px rgba(0,0,0,.25);}
+  .modal-h{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 12px;border-bottom:1px solid var(--line);}
+  .modal-h h2{font-size:17px;margin:0;font-weight:700;}
+  .modal-b{padding:16px 22px 6px;overflow-y:auto;}
+  .modal-f{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;border-top:1px solid var(--line);background:#fff;border-radius:0 0 12px 12px;}
+  .modal .field{margin-bottom:10px;}
+  .modal .sect{margin:14px 0 8px;}
+  .preview{font-family:var(--mono);font-size:15px;color:var(--brand);font-weight:700;}
+  .deplist{max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:7px;padding:8px 10px;background:var(--surface-2);}
+  .deplist label{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;cursor:pointer;}
+  .tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .tpl{border:1px solid var(--line-strong);border-radius:7px;padding:8px 10px;cursor:pointer;background:var(--surface);font-size:12.5px;}
+  .tpl:hover{border-color:var(--brand);background:var(--surface-2);}
+  .tpl b{display:block;font-size:12.5px;}
+  .tpl span{font-size:10.5px;color:var(--ink-soft);}
+
+  .orderlist{list-style:none;margin:0;padding:0;counter-reset:s;}
+  .orderlist li{counter-increment:s;padding:7px 10px;border-bottom:1px solid var(--line);font-size:12.5px;display:flex;gap:10px;align-items:center;}
+  .orderlist li::before{content:counter(s);font-family:var(--mono);color:var(--ink-faint);width:22px;flex:0 0 22px;}
+
+  @media (max-width:880px){
+    .app{flex-direction:column;}
+    .rail{width:100%;flex-direction:row;height:auto;position:relative;align-items:center;padding:10px 12px;overflow-x:auto;gap:8px;}
+    .brand{padding:0;}.brand .name span{display:none;}
+    .rail-nav{margin-top:0;flex-direction:row;}
+    .rail-foot{margin-top:0;margin-left:auto;flex-direction:row;align-items:center;padding-top:0;}
+    .rail-foot .startbox{display:none;}
+    .savenote{display:none;}
+    main{padding:18px;}
+    .frow{flex-direction:column;gap:0;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail">
+    <div class="brand">
+      <div class="mark"></div>
+      <div class="name">Renovation<span>self-planner</span></div>
+    </div>
+    <div class="rail-nav" id="railNav"></div>
+    <div class="rail-foot">
+      <div class="startbox">
+        <label for="projStart">Project start date</label>
+        <input type="date" id="projStart" onchange="setProjectStart(this.value)">
+      </div>
+      <button class="railact primary" onclick="exportXLSX()">↧ Export Excel</button>
+      <button class="railact" onclick="document.getElementById('impFile').click()">↥ Import Excel</button>
+      <input type="file" id="impFile" accept=".xlsx,.xls" style="display:none;" onchange="handleImportFile(this.files[0]); this.value='';">
+      <button class="railact" onclick="if(confirm('Reset everything back to the starting example plan? This cannot be undone.')) resetToSeed()">↺ Reset to example</button>
+      <div class="savenote" id="saveNote">Loading…</div>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+<div id="modalRoot"></div>
+<script>
+/* ============================================================================
+   RENOVATION SELF-PLANNER
+   Tabs: Setup · Tasks · Schedule · Materials · Estimate · Track
+   A "task" = one line, or a linked Material+Labor pair sharing room/name/category.
+   ========================================================================== */
+
+const TABS = [
+  {id:'setup',    label:'Setup',    ic:'⚙'},
+  {id:'tasks',    label:'Tasks',    ic:'▤'},
+  {id:'schedule', label:'Schedule', ic:'▦'},
+  {id:'materials',label:'Materials',ic:'▩'},
+  {id:'estimate', label:'Estimate', ic:'₹'},
+  {id:'track',    label:'Track',    ic:'◉'},
+];
+
+const CATEGORIES = ['Carpentry','Furnishing','Plumbing','Electrical','Tiling','Civil','Civil/POP','Flooring','Painting','Civil/Carpentry','Plumbing/Glasswork','Other'];
+const LINE_TYPES = ['Material','Labor','Inclusive'];
+const STATUSES = ['Not Started','In Progress','Done','On Hold'];
+const BUY_STATUSES = ['To buy','Ordered','Delivered'];
+const UNITS = ['sqft','running ft','point','fixture','lumpsum'];
+
+// Category -> default trade for Labor / Inclusive lines. Material is always "Material".
+const CATEGORY_TRADE = {
+  'Carpentry':{labor:'Carpenter',inclusive:'Carpenter'},
+  'Furnishing':{labor:'Carpenter/Vendor',inclusive:'Carpenter/Vendor'},
+  'Plumbing':{labor:'Plumber',inclusive:'Plumber'},
+  'Electrical':{labor:'Electrician',inclusive:'Electrician'},
+  'Tiling':{labor:'Tile Installer',inclusive:'Tile Installer'},
+  'Civil':{labor:'Mason',inclusive:'Mason'},
+  'Civil/POP':{labor:'Mason / POP',inclusive:'Mason / POP'},
+  'Flooring':{labor:'Flooring Contractor',inclusive:'Flooring Contractor'},
+  'Painting':{labor:'Painter',inclusive:'Painter'},
+  'Civil/Carpentry':{labor:'Mason / Carpenter',inclusive:'Mason / Carpenter'},
+  'Plumbing/Glasswork':{labor:'Glass Fabricator',inclusive:'Glass Fabricator'},
+  'Other':{labor:'',inclusive:''},
+};
+// Category -> default duration in working days (a starting guess, editable per task).
+const CATEGORY_DURATION = {
+  'Carpentry':4,'Furnishing':1,'Plumbing':2,'Electrical':2,'Tiling':3,'Civil':3,
+  'Civil/POP':3,'Flooring':3,'Painting':2,'Civil/Carpentry':2,'Plumbing/Glasswork':2,'Other':1,
+};
+function tradeFor(cat, lt){
+  if(lt==='Material') return 'Material';
+  const m = CATEGORY_TRADE[cat]; if(!m) return '';
+  return lt==='Labor' ? m.labor : m.inclusive;
+}
+
+// Normalise any worker/trade string to a colour bucket used across Schedule + Materials.
+const TRADE_BUCKETS = [
+  {test:/glass/i,           key:'glass',    name:'Glass'},
+  {test:/plumb/i,           key:'plumber',  name:'Plumber'},
+  {test:/electr/i,          key:'electric', name:'Electrician'},
+  {test:/tile|tiling/i,     key:'tiling',   name:'Tiling'},
+  {test:/paint/i,           key:'painter',  name:'Painter'},
+  {test:/carpenter|carpentry|furnish|vendor/i, key:'carpenter', name:'Carpenter'},
+  {test:/mason|civil|pop|floor/i, key:'mason', name:'Mason / Civil'},
+  {test:/material/i,        key:'material', name:'Material'},
+];
+function tradeBucket(str){
+  const s = String(str||'');
+  for(const b of TRADE_BUCKETS){ if(b.test.test(s)) return b; }
+  return {key:'other', name:(s.trim()||'Other')};
+}
+function tradeColor(key){ return getComputedStyle(document.documentElement).getPropertyValue('--t-'+key).trim() || '#556'; }
+
+// Task quick-start templates (prefill the Add form; user still sets room + qty).
+function TEMPLATES(){ return [
+  {name:'Fresh paint',        category:'Painting',           split:true,  mat:'paint_material',    lab:'paint_labor',     unit:'sqft'},
+  {name:'Re-tile wall / floor',category:'Tiling',            split:true,  mat:'tile_material',     lab:'tile_labor',      unit:'sqft'},
+  {name:'Wall repair + POP',  category:'Civil/POP',          split:true,  mat:'civil_material',    lab:'civil_labor',     unit:'sqft'},
+  {name:'Flooring',           category:'Flooring',           split:true,  mat:'tile_material',     lab:'tile_labor',      unit:'sqft'},
+  {name:'Electrical points / fixtures',category:'Electrical',split:true,  mat:'electrical_material',lab:'electrical_labor',unit:'point'},
+  {name:'Countertop (granite)',category:'Civil/Carpentry',   split:true,  mat:'granite_material',  lab:'granite_labor',   unit:'sqft'},
+  {name:'Glass shower partition',category:'Plumbing/Glasswork',split:true, mat:'glass_material',    lab:'glass_labor',     unit:'sqft'},
+  {name:'TV / storage unit',  category:'Carpentry',          single:'Inclusive', rate:'carpenter', unit:'sqft'},
+  {name:'Skirting',           category:'Carpentry',          single:'Inclusive', rate:'skirting',  unit:'running ft'},
+  {name:'Custom purchase / fixture',category:'Furnishing',   single:'Inclusive', flat:true},
+]; }
+
+/* ---------------- Defaults ---------------- */
+function defaultPhases(){ return [{id:1,label:'Phase 1 — Now'},{id:2,label:'Phase 2 — Next'},{id:3,label:'Phase 3 — Later'}]; }
+function nextPhaseId(){ return Math.max(0,...state.phases.map(p=>Number(p.id)||0))+1; }
+function getPhase(id){ return state.phases.find(p=>p.id===id); }
+function phaseOrder(id){ const i=state.phases.findIndex(p=>p.id===id); return i<0?999:i; }
+
+function defaultStages(){ return [
+  {id:1,label:'Civil & POP repairs'},
+  {id:2,label:'Rough plumbing'},
+  {id:3,label:'Rough electrical'},
+  {id:4,label:'False ceiling'},
+  {id:5,label:'Tiling, flooring & countertop'},
+  {id:6,label:'Glasswork'},
+  {id:7,label:'Painting'},
+  {id:8,label:'Electrical fixtures'},
+  {id:9,label:'Bathroom fixtures'},
+  {id:10,label:'Carpentry & furniture'},
+]; }
+function nextStageId(){ return Math.max(0,...state.stages.map(s=>Number(s.id)||0))+1; }
+function getStage(id){ return state.stages.find(s=>s.id===id); }
+function stageOrder(id){ const i=state.stages.findIndex(s=>s.id===id); return i<0?998:i; }
+
+function defaultRates(){ return [
+  {key:'carpenter',label:'Carpenter (inclusive)',unit:'sqft',value:1500},
+  {key:'paint_material',label:'Paint — material',unit:'sqft',value:11},
+  {key:'paint_labor',label:'Paint — labour',unit:'sqft',value:9},
+  {key:'civil_material',label:'Civil / POP — material',unit:'sqft',value:30},
+  {key:'civil_labor',label:'Civil / POP — labour',unit:'sqft',value:25},
+  {key:'tile_material',label:'Tile — material',unit:'sqft',value:130},
+  {key:'tile_labor',label:'Tile — labour',unit:'sqft',value:40},
+  {key:'granite_material',label:'Countertop — material',unit:'sqft',value:250},
+  {key:'granite_labor',label:'Countertop — labour',unit:'sqft',value:80},
+  {key:'electrical_material',label:'Electrical — material (per point)',unit:'point',value:1200},
+  {key:'electrical_labor',label:'Electrical — labour (per point)',unit:'point',value:300},
+  {key:'glass_material',label:'Glass partition — material',unit:'sqft',value:650},
+  {key:'glass_labor',label:'Glass partition — labour',unit:'sqft',value:150},
+  {key:'skirting',label:'Skirting (inclusive)',unit:'running ft',value:185},
+]; }
+
+function defaultRooms(){ return ['Master Bedroom','Kids Room','Guest Room','Study Room','Living Room','Overall (Whole House)','Balcony','Kids Bathroom']; }
+
+function defaultProjectStart(){
+  const d = new Date(); d.setHours(12,0,0,0);
+  // next Monday, so the example schedule starts clean
+  const add = (8 - d.getDay()) % 7 || 7;
+  d.setDate(d.getDate()+add);
+  return isoDate(d);
+}
+
+/* ---------------- Seed example plan ---------------- */
+function seedItemsRaw(){
+  const mk = (o)=>Object.assign({workerType:'',mandatory:true,stageId:null,dependsOn:[],status:'Not Started',actualCost:null,notes:'',durationDays:null,startOverride:null,buyStatus:'To buy'},o);
+  return [
+    mk({id:'mb_tv',room:'Master Bedroom',name:'TV unit with study section',category:'Carpentry',lineType:'Inclusive',workerType:'Carpenter',phase:1,stageId:10,costMethod:'rate',rateKey:'carpenter',qty:52,durationDays:4}),
+    mk({id:'mb_chair',room:'Master Bedroom',name:'New study chair',category:'Furnishing',lineType:'Inclusive',workerType:'Carpenter/Vendor',phase:2,stageId:10,mandatory:false,costMethod:'custom',customAmount:4500,durationDays:1}),
+    mk({id:'mb_hb',room:'Master Bedroom',name:'Repair bed headboard',category:'Carpentry',lineType:'Inclusive',workerType:'Carpenter',phase:1,stageId:10,costMethod:'custom',customAmount:9000,durationDays:2}),
+
+    mk({id:'kr_leak_m',room:'Kids Room',name:'Fix wall leakage',category:'Plumbing',lineType:'Material',workerType:'Material',phase:1,stageId:2,costMethod:'custom',customAmount:2500}),
+    mk({id:'kr_leak_l',room:'Kids Room',name:'Fix wall leakage',category:'Plumbing',lineType:'Labor',workerType:'Plumber',phase:1,stageId:2,costMethod:'custom',customAmount:2000,durationDays:1}),
+    mk({id:'kr_rt_m',room:'Kids Room',name:'Re-tile affected wall',category:'Tiling',lineType:'Material',workerType:'Material',phase:1,stageId:5,costMethod:'rate',rateKey:'tile_material',qty:24}),
+    mk({id:'kr_rt_l',room:'Kids Room',name:'Re-tile affected wall',category:'Tiling',lineType:'Labor',workerType:'Tile Installer',phase:1,stageId:5,costMethod:'rate',rateKey:'tile_labor',qty:24,durationDays:2,dependsOn:['kr_leak_l']}),
+    mk({id:'kr_tbl',room:'Kids Room',name:'Custom kids study table',category:'Carpentry',lineType:'Inclusive',workerType:'Carpenter',phase:1,stageId:10,costMethod:'custom',customAmount:22000,durationDays:3}),
+    mk({id:'kr_ch',room:'Kids Room',name:'2 kids chairs',category:'Furnishing',lineType:'Inclusive',workerType:'Carpenter/Vendor',phase:2,stageId:10,mandatory:false,costMethod:'custom',customAmount:6000,durationDays:1}),
+    mk({id:'kr_lt_m',room:'Kids Room',name:'3 light fixtures',category:'Electrical',lineType:'Material',workerType:'Material',phase:1,stageId:8,costMethod:'rate',rateKey:'electrical_material',qty:3}),
+    mk({id:'kr_lt_l',room:'Kids Room',name:'3 light fixtures',category:'Electrical',lineType:'Labor',workerType:'Electrician',phase:1,stageId:8,costMethod:'rate',rateKey:'electrical_labor',qty:3,durationDays:1}),
+
+    mk({id:'gr_skirt',room:'Guest Room',name:'Wooden flooring skirting repair',category:'Carpentry',lineType:'Inclusive',workerType:'Carpenter',phase:1,stageId:10,costMethod:'rate',rateKey:'skirting',qty:35,durationDays:2}),
+    mk({id:'gr_pop_m',room:'Guest Room',name:'Wall POP',category:'Civil/POP',lineType:'Material',workerType:'Material',phase:1,stageId:1,costMethod:'rate',rateKey:'civil_material',qty:130}),
+    mk({id:'gr_pop_l',room:'Guest Room',name:'Wall POP',category:'Civil/POP',lineType:'Labor',workerType:'Mason / POP',phase:1,stageId:1,costMethod:'rate',rateKey:'civil_labor',qty:130,durationDays:3}),
+    mk({id:'gr_sw_m',room:'Guest Room',name:'Change switchboards',category:'Electrical',lineType:'Material',workerType:'Material',phase:2,stageId:8,mandatory:false,costMethod:'custom',customAmount:2500}),
+    mk({id:'gr_sw_l',room:'Guest Room',name:'Change switchboards',category:'Electrical',lineType:'Labor',workerType:'Electrician',phase:2,stageId:8,mandatory:false,costMethod:'custom',customAmount:1500,durationDays:1}),
+
+    mk({id:'sr_loft',room:'Study Room',name:'Panel on loft',category:'Carpentry',lineType:'Inclusive',workerType:'Carpenter',phase:2,stageId:10,mandatory:false,costMethod:'custom',customAmount:12000,durationDays:2}),
+    mk({id:'sr_fl_m',room:'Study Room',name:'Flooring',category:'Flooring',lineType:'Material',workerType:'Material',phase:2,stageId:5,mandatory:false,costMethod:'rate',rateKey:'tile_material',qty:130}),
+    mk({id:'sr_fl_l',room:'Study Room',name:'Flooring',category:'Flooring',lineType:'Labor',workerType:'Flooring Contractor',phase:2,stageId:5,mandatory:false,costMethod:'rate',rateKey:'tile_labor',qty:130,durationDays:3}),
+    mk({id:'sr_w_m',room:'Study Room',name:'Wall repair + POP',category:'Civil/POP',lineType:'Material',workerType:'Material',phase:1,stageId:1,costMethod:'rate',rateKey:'civil_material',qty:150}),
+    mk({id:'sr_w_l',room:'Study Room',name:'Wall repair + POP',category:'Civil/POP',lineType:'Labor',workerType:'Mason / POP',phase:1,stageId:1,costMethod:'rate',rateKey:'civil_labor',qty:150,durationDays:3}),
+
+    mk({id:'lr_tv',room:'Living Room',name:'TV unit',category:'Carpentry',lineType:'Inclusive',workerType:'Carpenter',phase:1,stageId:10,costMethod:'rate',rateKey:'carpenter',qty:63,durationDays:4}),
+    mk({id:'lr_cr',room:'Living Room',name:'Crockery unit',category:'Carpentry',lineType:'Inclusive',workerType:'Carpenter',phase:1,stageId:10,costMethod:'rate',rateKey:'carpenter',qty:50,durationDays:4}),
+    mk({id:'lr_pn',room:'Living Room',name:'Paneling',category:'Carpentry',lineType:'Inclusive',workerType:'Carpenter',phase:1,stageId:10,costMethod:'custom',customAmount:60000,durationDays:5}),
+    mk({id:'lr_wd_m',room:'Living Room',name:'Wall design',category:'Painting',lineType:'Material',workerType:'Material',phase:1,stageId:7,costMethod:'custom',customAmount:9000}),
+    mk({id:'lr_wd_l',room:'Living Room',name:'Wall design',category:'Painting',lineType:'Labor',workerType:'Painter',phase:1,stageId:7,costMethod:'custom',customAmount:7000,durationDays:2,dependsOn:['ov_wall_l']}),
+
+    mk({id:'ov_wall_m',room:'Overall (Whole House)',name:'Wall repairs',category:'Civil',lineType:'Material',workerType:'Material',phase:1,stageId:1,costMethod:'custom',customAmount:11000}),
+    mk({id:'ov_wall_l',room:'Overall (Whole House)',name:'Wall repairs',category:'Civil',lineType:'Labor',workerType:'Mason',phase:1,stageId:1,costMethod:'custom',customAmount:10000,durationDays:4}),
+    mk({id:'ov_pop_m',room:'Overall (Whole House)',name:'POP as needed',category:'Civil/POP',lineType:'Material',workerType:'Material',phase:1,stageId:1,costMethod:'custom',customAmount:8500}),
+    mk({id:'ov_pop_l',room:'Overall (Whole House)',name:'POP as needed',category:'Civil/POP',lineType:'Labor',workerType:'Mason / POP',phase:1,stageId:1,costMethod:'custom',customAmount:7000,durationDays:3,dependsOn:['ov_wall_l']}),
+    mk({id:'ov_pt_m',room:'Overall (Whole House)',name:'Fresh paint',category:'Painting',lineType:'Material',workerType:'Material',phase:1,stageId:7,costMethod:'rate',rateKey:'paint_material',qty:10500}),
+    mk({id:'ov_pt_l',room:'Overall (Whole House)',name:'Fresh paint',category:'Painting',lineType:'Labor',workerType:'Painter',phase:1,stageId:7,costMethod:'rate',rateKey:'paint_labor',qty:10500,durationDays:6,dependsOn:['ov_pop_l','gr_pop_l','sr_w_l']}),
+
+    mk({id:'bal_t_m',room:'Balcony',name:'Wall tile',category:'Tiling',lineType:'Material',workerType:'Material',phase:1,stageId:5,costMethod:'rate',rateKey:'tile_material',qty:100}),
+    mk({id:'bal_t_l',room:'Balcony',name:'Wall tile',category:'Tiling',lineType:'Labor',workerType:'Tile Installer',phase:1,stageId:5,costMethod:'rate',rateKey:'tile_labor',qty:100,durationDays:3}),
+
+    mk({id:'kb_to_m',room:'Kids Bathroom',name:'Toilet seat',category:'Plumbing',lineType:'Material',workerType:'Material',phase:1,stageId:9,costMethod:'custom',customAmount:6000}),
+    mk({id:'kb_to_l',room:'Kids Bathroom',name:'Toilet seat',category:'Plumbing',lineType:'Labor',workerType:'Plumber',phase:1,stageId:9,costMethod:'custom',customAmount:1200,durationDays:1,dependsOn:['kb_ti_l']}),
+    mk({id:'kb_bs_m',room:'Kids Bathroom',name:'Wash basin',category:'Plumbing',lineType:'Material',workerType:'Material',phase:1,stageId:9,costMethod:'custom',customAmount:4500}),
+    mk({id:'kb_bs_l',room:'Kids Bathroom',name:'Wash basin',category:'Plumbing',lineType:'Labor',workerType:'Plumber',phase:1,stageId:9,costMethod:'custom',customAmount:1800,durationDays:1,dependsOn:['kb_ct_l','kb_ti_l']}),
+    mk({id:'kb_ct_m',room:'Kids Bathroom',name:'Countertop',category:'Civil/Carpentry',lineType:'Material',workerType:'Material',phase:1,stageId:5,costMethod:'rate',rateKey:'granite_material',qty:12}),
+    mk({id:'kb_ct_l',room:'Kids Bathroom',name:'Countertop',category:'Civil/Carpentry',lineType:'Labor',workerType:'Mason / Carpenter',phase:1,stageId:5,costMethod:'rate',rateKey:'granite_labor',qty:12,durationDays:2,dependsOn:['kb_ti_l']}),
+    mk({id:'kb_ti_m',room:'Kids Bathroom',name:'New tiles',category:'Tiling',lineType:'Material',workerType:'Material',phase:1,stageId:5,costMethod:'rate',rateKey:'tile_material',qty:85}),
+    mk({id:'kb_ti_l',room:'Kids Bathroom',name:'New tiles',category:'Tiling',lineType:'Labor',workerType:'Tile Installer',phase:1,stageId:5,costMethod:'rate',rateKey:'tile_labor',qty:85,durationDays:3,dependsOn:['kr_leak_l']}),
+    mk({id:'kb_sh_m',room:'Kids Bathroom',name:'Shower partition',category:'Plumbing/Glasswork',lineType:'Material',workerType:'Material',phase:1,stageId:6,costMethod:'rate',rateKey:'glass_material',qty:15}),
+    mk({id:'kb_sh_l',room:'Kids Bathroom',name:'Shower partition',category:'Plumbing/Glasswork',lineType:'Labor',workerType:'Glass Fabricator',phase:1,stageId:6,costMethod:'rate',rateKey:'glass_labor',qty:15,durationDays:1,dependsOn:['kb_ti_l']}),
+    mk({id:'kb_led_m',room:'Kids Bathroom',name:'LED strip light',category:'Electrical',lineType:'Material',workerType:'Material',phase:1,stageId:3,costMethod:'custom',customAmount:2500}),
+    mk({id:'kb_led_l',room:'Kids Bathroom',name:'LED strip light',category:'Electrical',lineType:'Labor',workerType:'Electrician',phase:1,stageId:3,costMethod:'custom',customAmount:800,durationDays:1}),
+    mk({id:'kb_fc_m',room:'Kids Bathroom',name:'Recreate false ceiling',category:'Civil/POP',lineType:'Material',workerType:'Material',phase:1,stageId:4,costMethod:'custom',customAmount:5000}),
+    mk({id:'kb_fc_l',room:'Kids Bathroom',name:'Recreate false ceiling',category:'Civil/POP',lineType:'Labor',workerType:'Mason / POP',phase:1,stageId:4,costMethod:'custom',customAmount:4000,durationDays:2,dependsOn:['kb_led_l']}),
+    mk({id:'kb_mir',room:'Kids Bathroom',name:'Mirror',category:'Furnishing',lineType:'Inclusive',workerType:'Carpenter/Vendor',phase:1,stageId:10,costMethod:'custom',customAmount:3000,durationDays:1}),
+  ];
+}
+function seedItems(){ const it=seedItemsRaw(); deriveTaskIds(it); return it; }
+
+function seedState(){
+  return {
+    projectStart: defaultProjectStart(),
+    workWeekends: false,
+    sequenceStages: true,
+    rates: defaultRates(),
+    rooms: defaultRooms(),
+    phases: defaultPhases(),
+    stages: defaultStages(),
+    items: seedItems(),
+    activeTab:'tasks',
+    planRoomFilter:'All',
+    phaseFilter:'All',
+    scheduleView:'timeline',
+    searchQuery:'',
+  };
+}
+
+/* ============================== STATE / PERSISTENCE ============================== */
+let state=null, loaded=false, draftTask=null, draftIsNew=false, saveTimer=null;
+const STORAGE_KEY='reno_self_planner_v2';
+
+function hasClaudeStorage(){ return typeof window!=='undefined'&&window.storage&&typeof window.storage.get==='function'&&typeof window.storage.set==='function'; }
+function hasLocalStorage(){ try{const k='__reno_probe__';window.localStorage.setItem(k,'1');window.localStorage.removeItem(k);return true;}catch(e){return false;} }
+
+async function loadState(){
+  let raw=null;
+  if(hasClaudeStorage()){ try{ const res=await window.storage.get(STORAGE_KEY,false); if(res&&res.value) raw=res.value; }catch(e){} }
+  if(!raw&&hasLocalStorage()){ try{ const v=window.localStorage.getItem(STORAGE_KEY); if(v) raw=v; }catch(e){} }
+  if(raw){
+    try{
+      state=JSON.parse(raw);
+      normalizeState();
+    }catch(e){ state=seedState(); }
+  } else { state=seedState(); }
+  loaded=true;
+  renderAll();
+}
+function normalizeState(){
+  if(!state.rooms) state.rooms=defaultRooms();
+  if(!state.rates) state.rates=defaultRates();
+  if(!state.phases) state.phases=defaultPhases();
+  if(!state.stages) state.stages=defaultStages();
+  if(!state.items) state.items=[];
+  if(!state.projectStart) state.projectStart=defaultProjectStart();
+  if(state.workWeekends==null) state.workWeekends=false;
+  if(state.sequenceStages==null) state.sequenceStages=true;
+  migrateStagePhaseModel(state);
+  migrateBatchToStage(state.items);
+  state.items.forEach(it=>{
+    if(it.durationDays==null) it.durationDays = CATEGORY_DURATION[it.category]||1;
+    if(it.buyStatus==null) it.buyStatus='To buy';
+    if(it.startOverride===undefined) it.startOverride=null;
+  });
+  deriveTaskIds(state.items);
+  if(!state.activeTab) state.activeTab='tasks';
+  if(!state.planRoomFilter) state.planRoomFilter='All';
+  if(!state.phaseFilter) state.phaseFilter='All';
+  if(!state.scheduleView) state.scheduleView='timeline';
+  if(state.searchQuery==null) state.searchQuery='';
+}
+
+function persist(){
+  const note=document.getElementById('saveNote'); if(note) note.textContent='Saving…';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    const json=JSON.stringify(state); let c=false,l=false;
+    if(hasClaudeStorage()){ try{await window.storage.set(STORAGE_KEY,json,false);c=true;}catch(e){} }
+    if(!c&&hasLocalStorage()){ try{window.localStorage.setItem(STORAGE_KEY,json);l=true;}catch(e){} }
+    if(!note) return;
+    const t=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    note.textContent = c?('Saved '+t) : l?('Saved in browser '+t) : 'Use Export to keep your work';
+  },400);
+  schedCache=null; // any change may affect dates
+}
+function resetToSeed(){ state=seedState(); schedCache=null; persist(); renderAll(); }
+function setProjectStart(v){ if(!v) return; state.projectStart=v; schedCache=null; persist(); renderMain(); }
+
+/* ============================== HELPERS ============================== */
+function fmt(n){ n=Math.round(Number(n)||0); return '₹'+n.toLocaleString('en-IN'); }
+function getRate(k){ return state.rates.find(r=>r.key===k); }
+function getItem(id){ return state.items.find(i=>i.id===id); }
+function itemCost(it){ if(it.costMethod==='rate'){ const r=getRate(it.rateKey); return (r?r.value:0)*(Number(it.qty)||0);} return Number(it.customAmount)||0; }
+function grandTotal(items){ return items.reduce((s,i)=>s+itemCost(i),0); }
+function uid(p){ return (p||'item')+'_'+Math.random().toString(36).slice(2,8); }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* dates: work on local Date at noon to dodge tz/DST edges. Store ISO yyyy-mm-dd. */
+function isoDate(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+function parseDate(s){ if(!s) return null; const p=String(s).split('-'); if(p.length<3) return null; const d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); d.setHours(12,0,0,0); return d; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); x.setHours(12,0,0,0); return x; }
+function isWeekend(d){ const g=d.getDay(); return g===0||g===6; }
+function nextWorkday(d){ let x=new Date(d); if(state.workWeekends) return x; while(isWeekend(x)) x=addDays(x,1); return x; }
+// end date after `dur` working days starting at `start`
+function addWorkingDays(start, dur){
+  let x=nextWorkday(new Date(start)); let count=1;
+  while(count<dur){ x=addDays(x,1); if(!state.workWeekends){ while(isWeekend(x)) x=addDays(x,1);} count++; }
+  return x;
+}
+function fmtDay(d){ return d.getDate()+' '+d.toLocaleString('en-US',{month:'short'}); }
+function weekdayShort(d){ return d.toLocaleString('en-US',{weekday:'short'}); }
+function isoWeekKey(d){ const x=addDays(d, -( (d.getDay()+6)%7 )); return isoDate(x); } // Monday of that week
+function daysDiff(a,b){ return Math.round((b-a)/86400000); }
+
+function tagLineType(lt){ const c=lt==='Material'?'tag-material':lt==='Labor'?'tag-labor':'tag-inclusive'; return `<span class="tag ${c}">${lt}</span>`; }
+function tagMand(m){ return m?`<span class="tag tag-mand">Mandatory</span>`:`<span class="tag tag-opt">Optional</span>`; }
+
+/* dependency cycle guard */
+function wouldCreateCycle(itemId,newDeps,override){
+  const items=override||state.items; const map={};
+  items.forEach(it=>map[it.id]=(it.id===itemId?newDeps:(it.dependsOn||[])));
+  function reach(s,t,seen){ seen=seen||new Set(); if(s===t) return true; if(seen.has(s)) return false; seen.add(s); for(const d of (map[s]||[])){ if(reach(d,t,seen)) return true;} return false; }
+  for(const d of newDeps){ if(reach(d,itemId)) return true; } return false;
+}
+function suggestedOrder(){
+  const visited=new Set(),temp=new Set(),order=[];
+  function visit(id){ if(visited.has(id)||temp.has(id)) return; temp.add(id); const it=getItem(id); (it&&it.dependsOn||[]).forEach(d=>{if(getItem(d))visit(d);}); temp.delete(id); visited.add(id); order.push(id); }
+  [...state.items].sort((a,b)=>stageOrder(a.stageId)-stageOrder(b.stageId)).map(i=>i.id).forEach(visit);
+  return order.map(id=>getItem(id)).filter(Boolean);
+}
+
+/* migrations from older saved shapes */
+function migrateStagePhaseModel(state){
+  const old = Array.isArray(state.stages)&&state.stages.length>0&&state.stages[0].phaseId!==undefined;
+  if(!old) return;
+  state.stages=state.stages.map(s=>({id:s.id,label:s.label}));
+  state.phases=defaultPhases();
+  (state.items||[]).forEach(it=>{ it.phase = it.mandatory===false?2:1; });
+}
+function migrateBatchToStage(items){
+  items.forEach(it=>{
+    if(it.stageId!=null) return;
+    const label=(it.batch||'').trim(); if(!label) return;
+    let st=state.stages.find(s=>s.label===label);
+    if(!st){ st={id:nextStageId(),label}; state.stages.push(st); }
+    it.stageId=st.id;
+  });
+}
+
+/* task grouping */
+function deriveTaskIds(items){
+  const groups={};
+  items.forEach(it=>{ if(it.taskId) return; const k=it.room+'|'+it.name+'|'+it.category; (groups[k]=groups[k]||[]).push(it); });
+  Object.values(groups).forEach(g=>{
+    if(g.length===2){ const t=g.map(x=>x.lineType).sort().join(','); if(t==='Labor,Material'){ const tid=uid('task'); g.forEach(x=>x.taskId=tid); return; } }
+    g.forEach(x=>{ if(!x.taskId) x.taskId=x.id; });
+  });
+  return items;
+}
+function groupByTask(items){
+  const map={},order=[];
+  items.forEach(it=>{ const tid=it.taskId||it.id; if(!map[tid]){map[tid]=[];order.push(tid);} map[tid].push(it); });
+  return order.map(tid=>{
+    const lines=map[tid]; const mat=lines.find(l=>l.lineType==='Material'); const lab=lines.find(l=>l.lineType==='Labor');
+    const isSplit=lines.length===2&&!!mat&&!!lab; const primary=lab||lines[0];
+    return {taskId:tid,room:primary.room,name:primary.name,category:primary.category,phase:primary.phase,stageId:primary.stageId,
+      mandatory:primary.mandatory,durationDays:primary.durationDays,startOverride:primary.startOverride,
+      lines,isSplit,material:mat,labor:lab,primary,totalCost:lines.reduce((s,l)=>s+itemCost(l),0)};
+  });
+}
+function taskTradeBucket(task){ const w = task.isSplit?(task.labor.workerType):(task.primary.workerType); return tradeBucket(w||task.category); }
+
+let expandedTasks=new Set();
+function toggleExpand(id){ if(expandedTasks.has(id)) expandedTasks.delete(id); else expandedTasks.add(id); renderMain(); }
+
+/* ============================== SCHEDULE ENGINE ============================== */
+/* Forward-pass earliest-start honouring: project start, optional stage cascade,
+   dependency finishes, and per-task manual start overrides. Returns map taskId -> {start,end}. */
+let schedCache=null;
+function computeSchedule(){
+  if(schedCache) return schedCache;
+  const start = parseDate(state.projectStart) || parseDate(defaultProjectStart());
+  const tasks = groupByTask(state.items);
+  const byId={}; tasks.forEach(t=>byId[t.taskId]=t);
+
+  // map every line id -> its taskId, so dependencies (stored per line) resolve to tasks
+  const lineToTask={}; state.items.forEach(i=>lineToTask[i.id]=i.taskId||i.id);
+  function taskDeps(t){ const s=new Set(); t.lines.forEach(l=>(l.dependsOn||[]).forEach(d=>{ const tid=lineToTask[d]; if(tid&&tid!==t.taskId) s.add(tid); })); return [...s]; }
+
+  // stage cascade baseline: earliest a stage may begin = latest finish of all earlier-stage tasks
+  const sched={};
+  // process in dependency + stage order
+  const ordered=[];
+  const visited=new Set(),temp=new Set();
+  const orderIndex={}; tasks.forEach((t,i)=>orderIndex[t.taskId]=i);
+  function visit(tid){ if(visited.has(tid)||temp.has(tid)) return; temp.add(tid); const t=byId[tid]; if(t) taskDeps(t).forEach(d=>{ if(byId[d]) visit(d); }); temp.delete(tid); visited.add(tid); ordered.push(tid); }
+  [...tasks].sort((a,b)=>stageOrder(a.stageId)-stageOrder(b.stageId)|| (orderIndex[a.taskId]-orderIndex[b.taskId])).forEach(t=>visit(t.taskId));
+
+  function stageCascadeStart(t){
+    if(!state.sequenceStages) return start;
+    const so = stageOrder(t.stageId);
+    let latest=null;
+    for(const tid in sched){ const ot=byId[tid]; if(!ot) continue; if(stageOrder(ot.stageId)<so){ const e=sched[tid].end; if(!latest||e>latest) latest=e; } }
+    return latest ? nextWorkday(addDays(latest,1)) : start;
+  }
+
+  ordered.forEach(tid=>{
+    const t=byId[tid]; if(!t) return;
+    let s = nextWorkday(new Date(start));
+    const cascade = stageCascadeStart(t); if(cascade>s) s=cascade;
+    taskDeps(t).forEach(d=>{ if(sched[d]){ const after=nextWorkday(addDays(sched[d].end,1)); if(after>s) s=after; } });
+    if(t.startOverride){ const ov=parseDate(t.startOverride); if(ov) s=nextWorkday(ov); }
+    const dur=Math.max(1,Number(t.durationDays)||1);
+    const e=addWorkingDays(s,dur);
+    sched[tid]={start:s,end:e,dur};
+  });
+
+  schedCache={map:sched,byId,tasks,projStart:start};
+  return schedCache;
+}
+function projectEndDate(){ const {map}=computeSchedule(); let mx=null; for(const k in map){ if(!mx||map[k].end>mx) mx=map[k].end; } return mx; }
+
+/* ============================== RENDER: SHELL ============================== */
+function renderAll(){ if(!loaded) return; renderNav(); renderMain(); const ps=document.getElementById('projStart'); if(ps) ps.value=state.projectStart; }
+function renderNav(){
+  const nav=document.getElementById('railNav');
+  nav.innerHTML=TABS.map(t=>`<button class="navbtn ${state.activeTab===t.id?'active':''}" onclick="switchTab('${t.id}')"><span class="ic">${t.ic}</span>${t.label}</button>`).join('');
+}
+function switchTab(id){ state.activeTab=id; renderMain(); renderNav(); }
+function renderMain(){
+  const m=document.getElementById('main');
+  const map={setup:renderSetupTab,tasks:renderTasksTab,schedule:renderScheduleTab,materials:renderMaterialsTab,estimate:renderEstimateTab,track:renderTrackTab};
+  m.innerHTML=(map[state.activeTab]||renderTasksTab)();
+}
+
+/* shared bits */
+function searchBox(ph){ return `<input type="text" id="searchInput" value="${esc(state.searchQuery||'')}" placeholder="${esc(ph||'Search…')}" style="max-width:230px;" oninput="setSearchQuery(this.value)">`; }
+function setSearchQuery(v){
+  state.searchQuery=v; const a=document.activeElement, id=a&&a.id, ss=a&&typeof a.selectionStart==='number'?a.selectionStart:null;
+  renderMain(); if(id){ const el=document.getElementById(id); if(el&&el.focus){ el.focus(); if(ss!=null&&el.setSelectionRange) el.setSelectionRange(ss,ss);} }
+}
+function matchesSearch(t,q){ if(!q) return true; q=q.toLowerCase(); const hay=[t.name,t.room,t.category,...(t.lines||[]).map(l=>l.workerType),...(t.lines||[]).map(l=>l.notes)].filter(Boolean).join(' ').toLowerCase(); return hay.includes(q); }
+function phaseFilterChips(){
+  return `<div class="row" style="margin-bottom:14px;">
+    <span style="font-size:11.5px;color:var(--ink-soft);">Phase</span>
+    <span class="chip ${state.phaseFilter==='All'?'active':''}" onclick="setPhaseFilter('All')">All</span>
+    ${state.phases.map(p=>`<span class="chip ${state.phaseFilter===p.id?'active':''}" onclick="setPhaseFilter(${p.id})">${esc(p.label)}</span>`).join('')}
+  </div>`;
+}
+function setPhaseFilter(v){ state.phaseFilter=v==='All'?'All':Number(v); renderMain(); }
+function phaseFiltered(items){ return state.phaseFilter==='All'?items:items.filter(i=>i.phase===state.phaseFilter); }
+
+/* ============================== TAB: TASKS ============================== */
+let selectedTasks=new Set();
+function renderTasksTab(){
+  const filter=state.planRoomFilter||'All', q=state.searchQuery||'';
+  const roomChips=['All',...state.rooms].map(r=>`<span class="chip ${filter===r?'active':''}" onclick="setPlanRoomFilter('${esc(r)}')">${esc(r)}</span>`).join('');
+  let items=filter==='All'?state.items:state.items.filter(i=>i.room===filter);
+  items=phaseFiltered(items);
+  const visibleIds=[];
+
+  function taskRow(task){
+    visibleIds.push(task.taskId);
+    const checked=selectedTasks.has(task.taskId);
+    const chev=task.isSplit?`<button class="iconbtn" onclick="toggleExpand('${task.taskId}')">${expandedTasks.has(task.taskId)?'▾':'▸'}</button>`:`<span style="display:inline-block;width:22px;"></span>`;
+    const typeCell=task.isSplit?`${tagLineType('Material')} ${tagLineType('Labor')}`:tagLineType(task.lines[0].lineType);
+    const qtyCell=(!task.isSplit&&task.lines[0].costMethod==='rate')?(task.lines[0].qty+' '+((getRate(task.lines[0].rateKey)||{}).unit||'')):'—';
+    const bucket=taskTradeBucket(task);
+    let html=`<tr class="${checked?'sel':''}">
+      <td><input type="checkbox" ${checked?'checked':''} onchange="toggleTaskSelect('${task.taskId}',this.checked)"></td>
+      <td>${chev}${esc(task.name)}</td>
+      <td><span class="badge"><span class="dot" style="background:${tradeColor(bucket.key)}"></span>${esc(task.category)}</span></td>
+      <td>${typeCell}</td>
+      <td class="num">${qtyCell}</td>
+      <td class="num">${task.durationDays||1}d</td>
+      <td class="num">${fmt(task.totalCost)}</td>
+      <td>${tagMand(task.mandatory)}</td>
+      <td><button class="iconbtn" onclick="openTaskModal('${task.taskId}')" title="Edit">✎</button><button class="iconbtn" onclick="deleteTask('${task.taskId}')" title="Delete">✕</button></td>
+    </tr>`;
+    if(task.isSplit&&expandedTasks.has(task.taskId)){
+      html+=task.lines.map(l=>`<tr style="background:var(--surface-2);"><td></td>
+        <td style="padding-left:30px;font-size:12px;">${tagLineType(l.lineType)} <span style="color:var(--ink-soft);">${esc(l.workerType||'')}</span></td>
+        <td></td><td></td>
+        <td class="num" style="font-size:12px;">${l.costMethod==='rate'?(l.qty+' '+((getRate(l.rateKey)||{}).unit||'')):'—'}</td>
+        <td></td><td class="num" style="font-size:12px;">${fmt(itemCost(l))}</td><td></td><td></td></tr>`).join('');
+    }
+    return html;
+  }
+
+  let rows='';
+  if(filter==='All'){
+    state.rooms.forEach(room=>{
+      let ri=phaseFiltered(state.items.filter(i=>i.room===room)); if(!ri.length) return;
+      let tasks=groupByTask(ri); if(q) tasks=tasks.filter(t=>matchesSearch(t,q)); if(!tasks.length) return;
+      rows+=`<tr class="grp"><td colspan="9">${esc(room)} · ${fmt(grandTotal(ri))}</td></tr>`;
+      rows+=tasks.map(taskRow).join('');
+    });
+  } else {
+    let tasks=groupByTask(items); if(q) tasks=tasks.filter(t=>matchesSearch(t,q)); rows=tasks.map(taskRow).join('');
+  }
+  if(!rows) rows=`<tr><td colspan="9"><div class="empty">No work items yet here. Add one to get started.</div></td></tr>`;
+
+  const selVis=visibleIds.filter(id=>selectedTasks.has(id));
+  const allSel=visibleIds.length>0&&selVis.length===visibleIds.length;
+  const bulk=selectedTasks.size>0?bulkBar():'';
+
+  return `
+    <h1 class="page-h">Tasks</h1>
+    <p class="page-sub">Pick a room, add the work it needs. Anything with both a material and a labour cost is added together and shows as one row you can expand. Every task flows into the schedule, materials list and estimate.</p>
+    <div class="row" style="margin-bottom:10px;">${roomChips}<span class="chip ghost" onclick="promptAddRoom()">+ Add room</span></div>
+    ${phaseFilterChips()}
+    <div class="row between" style="margin-bottom:12px;">
+      <div style="font-size:12.5px;color:var(--ink-soft);">${items.length} line${items.length===1?'':'s'} · ${fmt(grandTotal(items))}</div>
+      <div class="row">${searchBox('Search tasks…')}
+        <button class="btn-ghost btn-sm" onclick="openTemplatePicker()">✦ From template</button>
+        <button class="btn" onclick="openTaskModal(null)">+ Add task</button></div>
+    </div>
+    ${bulk}
+    <table class="dt">
+      <thead><tr>
+        <th style="width:28px;"><input type="checkbox" ${allSel?'checked':''} onchange="selectAllVisible('${esc(JSON.stringify(visibleIds))}',this.checked)"></th>
+        <th>Task</th><th>Category</th><th>Type</th><th>Qty</th><th>Days</th><th style="text-align:right;">Cost</th><th>Flag</th><th></th>
+      </tr></thead><tbody>${rows}</tbody>
+    </table>`;
+}
+function setPlanRoomFilter(r){ state.planRoomFilter=r; renderMain(); }
+function toggleTaskSelect(id,c){ if(c) selectedTasks.add(id); else selectedTasks.delete(id); renderMain(); }
+function selectAllVisible(j,c){ let ids=[]; try{ids=JSON.parse(j);}catch(e){} if(c) ids.forEach(i=>selectedTasks.add(i)); else ids.forEach(i=>selectedTasks.delete(i)); renderMain(); }
+function clearSelection(){ selectedTasks.clear(); renderMain(); }
+function bulkBar(){
+  const n=selectedTasks.size;
+  return `<div class="card" style="margin-bottom:12px;background:var(--action-tint);border-color:var(--action);">
+    <div class="row between" style="gap:10px;"><div style="font-size:13px;font-weight:700;">${n} selected</div>
+      <div class="row" style="gap:8px;">
+        <button class="btn-ghost btn-sm" onclick="bulkSetMandatory(true)">Mark mandatory</button>
+        <button class="btn-ghost btn-sm" onclick="bulkSetMandatory(false)">Mark optional</button>
+        <select onchange="if(this.value)bulkMoveToPhase(this.value);this.selectedIndex=0;"><option value="">Move to phase…</option>${state.phases.map(p=>`<option value="${p.id}">${esc(p.label)}</option>`).join('')}</select>
+        <select onchange="if(this.value)bulkMoveToStage(this.value);this.selectedIndex=0;"><option value="">Move to stage…</option>${state.stages.map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join('')}</select>
+        <button class="btn-danger" onclick="bulkDelete()">Delete</button>
+        <button class="iconbtn" onclick="clearSelection()">✕ Clear</button>
+      </div></div></div>`;
+}
+function bulkDelete(){ const ids=[...selectedTasks]; if(!ids.length) return; if(!confirm(`Delete ${ids.length} task(s)? They'll also be removed from any dependency lists.`)) return;
+  const dropped=state.items.filter(i=>ids.includes(i.taskId)).map(i=>i.id);
+  state.items=state.items.filter(i=>!ids.includes(i.taskId));
+  state.items.forEach(i=>i.dependsOn=(i.dependsOn||[]).filter(d=>!dropped.includes(d)));
+  selectedTasks.clear(); persist(); renderAll(); }
+function bulkSetMandatory(v){ const ids=[...selectedTasks]; state.items.forEach(i=>{if(ids.includes(i.taskId))i.mandatory=v;}); persist(); renderAll(); }
+function bulkMoveToPhase(pid){ const ids=[...selectedTasks]; pid=Number(pid); state.items.forEach(i=>{if(ids.includes(i.taskId))i.phase=pid;}); persist(); renderAll(); }
+function bulkMoveToStage(sid){ const ids=[...selectedTasks]; sid=Number(sid); if(!getStage(sid))return; state.items.forEach(i=>{if(ids.includes(i.taskId))i.stageId=sid;}); persist(); renderAll(); }
+function promptAddRoom(){ const n=prompt('New room / area name:'); if(!n) return; const t=n.trim(); if(!t) return; if(state.rooms.includes(t)){alert('That room already exists.');return;} state.rooms.push(t); state.planRoomFilter=t; persist(); renderAll(); }
+
+/* ============================== TAB: SCHEDULE ============================== */
+function renderScheduleTab(){
+  const view=state.scheduleView||'timeline';
+  const seg=`<div class="seg">
+    <button class="${view==='timeline'?'active':''}" onclick="setScheduleView('timeline')">Timeline</button>
+    <button class="${view==='agenda'?'active':''}" onclick="setScheduleView('agenda')">By date</button>
+    <button class="${view==='board'?'active':''}" onclick="setScheduleView('board')">Board</button>
+  </div>`;
+  const opts=`<div class="row" style="gap:14px;font-size:12.5px;color:var(--ink-soft);">
+    <label class="row" style="gap:5px;cursor:pointer;"><input type="checkbox" style="width:auto;" ${state.sequenceStages?'checked':''} onchange="toggleSequenceStages(this.checked)"> Run stages in order</label>
+    <label class="row" style="gap:5px;cursor:pointer;"><input type="checkbox" style="width:auto;" ${state.workWeekends?'checked':''} onchange="toggleWeekends(this.checked)"> Work weekends</label>
+  </div>`;
+  let body='';
+  if(view==='timeline') body=renderGantt();
+  else if(view==='agenda') body=renderAgenda();
+  else body=renderBoard();
+  const end=projectEndDate();
+  const span=end?`${fmtDay(computeSchedule().projStart)} → ${fmtDay(end)}`:'—';
+  return `
+    <h1 class="page-h">Schedule</h1>
+    <p class="page-sub">Dates come from each task's duration, its dependencies, and the stage order — starting from your project date in the sidebar. Drag on the Board to re-order stages or move tasks; set a duration or a fixed start on any task to shift its dates.</p>
+    <div class="row between" style="margin-bottom:10px;">${seg}<div style="font-size:12.5px;color:var(--ink-soft);">Project runs <b style="font-family:var(--mono);">${span}</b></div></div>
+    ${phaseFilterChips()}
+    <div class="row between" style="margin-bottom:12px;">${opts}<div class="row">${searchBox('Search tasks…')}<button class="btn-ghost btn-sm" onclick="toggleSuggestedOrder()">Suggested order</button></div></div>
+    <div id="orderBox"></div>
+    ${tradeLegend()}
+    ${body}`;
+}
+function setScheduleView(v){ state.scheduleView=v; renderMain(); }
+function toggleSequenceStages(v){ state.sequenceStages=v; schedCache=null; persist(); renderMain(); }
+function toggleWeekends(v){ state.workWeekends=v; schedCache=null; persist(); renderMain(); }
+
+function tradeLegend(){
+  const seen=new Set(); const items=phaseFiltered(state.items); const tasks=groupByTask(items);
+  tasks.forEach(t=>seen.add(taskTradeBucket(t).key));
+  const order=['mason','plumber','electric','tiling','glass','painter','carpenter','material','other'];
+  const names={mason:'Mason/Civil',plumber:'Plumber',electric:'Electrician',tiling:'Tiling',glass:'Glass',painter:'Painter',carpenter:'Carpenter',material:'Material',other:'Other'};
+  const li=order.filter(k=>seen.has(k)).map(k=>`<span class="li"><span class="dot" style="background:${tradeColor(k)}"></span>${names[k]}</span>`).join('');
+  return `<div class="legend">${li}</div>`;
+}
+
+/* ---- Timeline / Gantt ---- */
+function renderGantt(){
+  const {map,byId}=computeSchedule();
+  const q=state.searchQuery||'';
+  let tasks=groupByTask(phaseFiltered(state.items));
+  if(q) tasks=tasks.filter(t=>matchesSearch(t,q));
+  const shown=tasks.filter(t=>map[t.taskId]);
+  if(!shown.length) return `<div class="empty">No scheduled tasks match. Add tasks or clear the filter.</div>`;
+
+  let minD=null,maxD=null;
+  shown.forEach(t=>{ const s=map[t.taskId]; if(!minD||s.start<minD)minD=s.start; if(!maxD||s.end>maxD)maxD=s.end; });
+  minD=addDays(minD,-1); maxD=addDays(maxD,2);
+  const totalDays=Math.max(1,daysDiff(minD,maxD)+1);
+  const CW=30;
+  const today=new Date(); today.setHours(12,0,0,0);
+
+  // header: months + days
+  const days=[]; for(let i=0;i<totalDays;i++) days.push(addDays(minD,i));
+  const months=[]; days.forEach((d,i)=>{ const key=d.getFullYear()+'-'+d.getMonth(); const last=months[months.length-1]; if(last&&last.key===key) last.n++; else months.push({key,n:1,label:d.toLocaleString('en-US',{month:'long',year:'numeric'})}); });
+  const monthBand=months.map(m=>`<div class="g-month" style="width:${m.n*CW}px;">${m.label}</div>`).join('');
+  const dayBand=days.map(d=>`<div class="g-day ${state.workWeekends?'':(isWeekend(d)?'we':'')} ${isoDate(d)===isoDate(today)?'today':''}" style="width:${CW}px;">${d.getDate()}</div>`).join('');
+
+  // weekend overlays + today line (drawn per lane via absolute)
+  function overlays(){
+    let ov='';
+    if(!state.workWeekends){ days.forEach((d,i)=>{ if(isWeekend(d)) ov+=`<div class="g-weekend" style="left:${i*CW}px;width:${CW}px;"></div>`; }); }
+    const ti=daysDiff(minD,today); if(ti>=0&&ti<totalDays) ov+=`<div class="g-todayline" style="left:${ti*CW+CW/2}px;"></div>`;
+    return ov;
+  }
+
+  // rows grouped by stage (in stage order), then unassigned
+  const stagesInOrder=[...state.stages].sort((a,b)=>stageOrder(a.id)-stageOrder(b.id));
+  const groups=stagesInOrder.map(s=>({stage:s,tasks:shown.filter(t=>t.stageId===s.id)})).filter(g=>g.tasks.length);
+  const un=shown.filter(t=>t.stageId==null||!state.stages.some(s=>s.id===t.stageId));
+  if(un.length) groups.push({stage:{label:'Unassigned'},tasks:un});
+
+  function barHTML(t){
+    const s=map[t.taskId]; const off=daysDiff(minD,s.start); const span=daysDiff(s.start,s.end)+1;
+    const col=tradeColor(taskTradeBucket(t).key);
+    const lbl=`${esc(t.name)}`;
+    const w=span*CW-4;
+    return `<div class="g-taskrow">
+      <div class="g-tasklbl" onclick="openTaskModal('${t.taskId}')" title="${esc(t.room+' — '+t.name)}">
+        <span class="dot" style="background:${col}"></span><span class="nm">${esc(t.name)} <span class="rm">· ${esc(t.room)}</span></span>
+      </div>
+      <div class="g-lane" style="width:${totalDays*CW}px;">${overlays()}
+        <div class="g-bar" style="left:${off*CW+2}px;width:${w}px;background:${col};" onclick="openTaskModal('${t.taskId}')" title="${esc(t.name)} · ${fmtDay(s.start)}–${fmtDay(s.end)} · ${s.dur}d${t.startOverride?' · fixed start':''}">
+          <span class="barlbl">${lbl}</span>
+        </div>
+      </div></div>`;
+  }
+  const rows=groups.map(g=>{
+    const hdr=`<div class="g-stagehdr"><div class="g-lbl-col">${esc(g.stage.label)}</div><div class="g-grid" style="width:${totalDays*CW}px;position:relative;">${overlays()}</div></div>`;
+    return hdr+g.tasks.map(barHTML).join('');
+  }).join('');
+
+  return `<div class="gantt-wrap"><div class="gantt" style="min-width:${210+totalDays*CW}px;">
+    <div class="g-head"><div class="g-lbl-col">Task</div><div><div class="g-months">${monthBand}</div><div class="g-days">${dayBand}</div></div></div>
+    <div class="g-body">${rows}</div>
+  </div></div>`;
+}
+
+/* ---- Agenda (by date) ---- */
+function renderAgenda(){
+  const {map}=computeSchedule();
+  const q=state.searchQuery||'';
+  let tasks=groupByTask(phaseFiltered(state.items));
+  if(q) tasks=tasks.filter(t=>matchesSearch(t,q));
+  const shown=tasks.filter(t=>map[t.taskId]);
+  if(!shown.length) return `<div class="empty">No scheduled tasks match.</div>`;
+  let minD=null,maxD=null; shown.forEach(t=>{const s=map[t.taskId]; if(!minD||s.start<minD)minD=s.start; if(!maxD||s.end>maxD)maxD=s.end;});
+
+  const rowsByDate={};
+  for(let d=new Date(minD); d<=maxD; d=addDays(d,1)){
+    if(!state.workWeekends&&isWeekend(d)) continue;
+    const key=isoDate(d);
+    const starting=shown.filter(t=>isoDate(map[t.taskId].start)===key);
+    const active=shown.filter(t=>{const s=map[t.taskId]; return s.start<=d&&d<=s.end;});
+    if(!active.length) continue;
+    rowsByDate[key]={date:new Date(d),starting,active};
+  }
+  const keys=Object.keys(rowsByDate).sort();
+  // group by week
+  const weeks={}; keys.forEach(k=>{ const wk=isoWeekKey(rowsByDate[k].date); (weeks[wk]=weeks[wk]||[]).push(k); });
+  const wkKeys=Object.keys(weeks).sort();
+
+  return wkKeys.map(wk=>{
+    const first=parseDate(weeks[wk][0]); const wkEnd=addDays(parseDate(wk),6);
+    const days=weeks[wk].map(k=>{
+      const r=rowsByDate[k];
+      const trades=[...new Set(r.active.map(t=>taskTradeBucket(t).key))];
+      const tradeNames={mason:'Mason/Civil',plumber:'Plumber',electric:'Electrician',tiling:'Tiling',glass:'Glass',painter:'Painter',carpenter:'Carpenter',material:'Material',other:'Other'};
+      const trHtml=trades.map(k=>`<span class="badge"><span class="dot" style="background:${tradeColor(k)}"></span>${tradeNames[k]||k}</span>`).join('');
+      const list=r.active.map(t=>{
+        const isStart=r.starting.includes(t);
+        const s=map[t.taskId];
+        return `<div class="agtask"><span class="dot" style="background:${tradeColor(taskTradeBucket(t).key)}"></span>
+          <span onclick="openTaskModal('${t.taskId}')" style="cursor:pointer;">${esc(t.name)} <span style="color:var(--ink-faint);">· ${esc(t.room)}</span></span>
+          ${isStart?'<span class="start">STARTS</span>':`<span class="cont">day ${daysDiff(s.start,r.date)+1}/${s.dur}</span>`}</div>`;
+      }).join('');
+      return `<div class="agday ${isWeekend(r.date)?'we':''}">
+        <div class="d">${r.date.getDate()} ${r.date.toLocaleString('en-US',{month:'short'})}<div class="wd">${weekdayShort(r.date)}</div></div>
+        <div class="body">${list}<div class="agtrades">${trHtml}</div></div></div>`;
+    }).join('');
+    return `<div class="agwk"><div class="agwk-h">Week of ${fmtDay(parseDate(wk))} — ${fmtDay(wkEnd)}</div>${days}</div>`;
+  }).join('');
+}
+
+/* ---- Board (drag/drop stages + tasks) ---- */
+let dragTaskId=null, dragStageId=null;
+function renderBoard(){
+  const q=state.searchQuery||'';
+  let tasks=groupByTask(phaseFiltered(state.items));
+  if(q) tasks=tasks.filter(t=>matchesSearch(t,q));
+  function card(t){
+    const deps=t.isSplit?[...new Set([...(t.material.dependsOn||[]),...(t.labor.dependsOn||[])])]:(t.lines[0].dependsOn||[]);
+    const di=deps.map(d=>getItem(d)).filter(Boolean);
+    const dh=di.length?`<div class="tdep">after: ${di.map(d=>esc(d.name)).join(', ')}</div>`:'';
+    const col=tradeColor(taskTradeBucket(t).key);
+    const ph=state.phaseFilter==='All'?`<span class="tag tag-opt" style="margin-left:4px;">${esc((getPhase(t.phase)||{}).label||'')}</span>`:'';
+    return `<div class="tcard" draggable="true" style="border-left-color:${col};"
+      ondragstart="onCardDragStart(event,'${t.taskId}')" ondragover="event.preventDefault();event.stopPropagation();" ondrop="onCardDrop(event,'${t.taskId}')" onclick="openTaskModal('${t.taskId}')">
+      <div class="tn">${esc(t.name)}</div>
+      <div class="tr">${esc(t.room)} · ${t.durationDays||1}d ${ph}</div>
+      <div class="tc">${fmt(t.totalCost)}</div>${dh}</div>`;
+  }
+  function col(stage,ts){
+    const tot=ts.reduce((s,t)=>s+t.totalCost,0);
+    return `<div class="col" ondragover="event.preventDefault();this.classList.add('drop');" ondragleave="this.classList.remove('drop');" ondrop="this.classList.remove('drop');onStageDrop(event,${stage.id})">
+      <div class="row between" draggable="true" ondragstart="onStageHeaderDragStart(event,${stage.id})" style="cursor:grab;">
+        <h3>${esc(stage.label)}</h3><span><button class="iconbtn" onclick="event.stopPropagation();renameStage(${stage.id})">✎</button><button class="iconbtn" onclick="event.stopPropagation();removeStage(${stage.id})">✕</button></span></div>
+      <div class="ctot">${ts.length} item${ts.length===1?'':'s'} · ${fmt(tot)}</div>
+      ${ts.length?ts.map(card).join(''):'<div class="empty" style="padding:14px;">Drop tasks here</div>'}
+      <button class="btn-ghost btn-sm" style="width:100%;margin-top:8px;" onclick="openTaskModal(null,null,${stage.id})">+ Add here</button></div>`;
+  }
+  const stagesInOrder=[...state.stages].sort((a,b)=>stageOrder(a.id)-stageOrder(b.id));
+  const cols=stagesInOrder.map(s=>col(s,tasks.filter(t=>t.stageId===s.id)));
+  const un=tasks.filter(t=>t.stageId==null||!state.stages.some(s=>s.id===t.stageId));
+  const unHtml=un.length?`<div class="col" ondragover="event.preventDefault();this.classList.add('drop');" ondragleave="this.classList.remove('drop');" ondrop="this.classList.remove('drop');onStageDrop(event,null)"><h3>Unassigned</h3><div class="ctot">${un.length} item(s)</div>${un.map(card).join('')}</div>`:'';
+  return `<div class="row" style="margin-bottom:10px;"><button class="btn-ghost btn-sm" onclick="addStage()">+ Add stage</button></div><div class="board">${cols.join('')}${unHtml}</div>`;
+}
+function onCardDragStart(e,id){ dragTaskId=id; dragStageId=null; if(e.dataTransfer){e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',id);}catch(x){}} }
+function moveTaskLines(taskId,stageId){ const lines=state.items.filter(i=>i.taskId===taskId); if(!lines.length) return []; state.items=state.items.filter(i=>i.taskId!==taskId); lines.forEach(l=>l.stageId=stageId); return lines; }
+function onStageDrop(e,stageId){ if(e){e.preventDefault();e.stopPropagation();} if(dragStageId!=null){onStageHeaderDrop(stageId);return;} if(!dragTaskId) return; const l=moveTaskLines(dragTaskId,stageId); if(!l.length){dragTaskId=null;return;} state.items.push(...l); dragTaskId=null; schedCache=null; persist(); renderMain(); }
+function onCardDrop(e,target){ if(e){e.preventDefault();e.stopPropagation();} if(!dragTaskId||dragTaskId===target) return; const tl=state.items.filter(i=>i.taskId===target); if(!tl.length) return; const ts=tl[0].stageId; const l=moveTaskLines(dragTaskId,ts); if(!l.length){dragTaskId=null;return;} const at=state.items.findIndex(i=>i.taskId===target); state.items.splice(at<0?state.items.length:at,0,...l); dragTaskId=null; schedCache=null; persist(); renderMain(); }
+function onStageHeaderDragStart(e,id){ dragStageId=id; dragTaskId=null; if(e.dataTransfer){e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain','stage:'+id);}catch(x){}} }
+function onStageHeaderDrop(target){ if(dragStageId==null||dragStageId===target){dragStageId=null;return;} const f=state.stages.findIndex(s=>s.id===dragStageId), t=state.stages.findIndex(s=>s.id===target); if(f<0||t<0){dragStageId=null;return;} const [m]=state.stages.splice(f,1); state.stages.splice(t,0,m); dragStageId=null; schedCache=null; persist(); renderMain(); }
+
+function addStage(){ const l=prompt('New stage name (e.g. "Waterproofing"):'); if(!l||!l.trim()) return; state.stages.push({id:nextStageId(),label:l.trim()}); persist(); renderMain(); }
+function renameStage(id){ const s=getStage(id); if(!s) return; const l=prompt('Rename stage:',s.label); if(!l||!l.trim()) return; s.label=l.trim(); persist(); renderMain(); }
+function removeStage(id){ const n=state.items.filter(i=>i.stageId===id).length; if(n&&!confirm(`${n} task line(s) are in this stage — they'll become unassigned. Continue?`)) return; state.items.forEach(i=>{if(i.stageId===id)i.stageId=null;}); state.stages=state.stages.filter(s=>s.id!==id); schedCache=null; persist(); renderMain(); }
+
+let showOrder=false;
+function toggleSuggestedOrder(){ showOrder=!showOrder; const box=document.getElementById('orderBox'); if(!box) return; if(!showOrder){box.innerHTML='';return;}
+  const order=suggestedOrder();
+  box.innerHTML=`<div class="card" style="margin-bottom:16px;"><div class="sect" style="margin-top:0;">Suggested execution order</div>
+    <p style="font-size:12px;color:var(--ink-soft);margin:-4px 0 8px;">Dependencies first, stage order breaks ties. Unrelated items can run in parallel.</p>
+    <ol class="orderlist">${order.map(it=>`<li><span class="dot" style="background:${tradeColor(tradeBucket(it.workerType||it.category).key)}"></span>${esc(it.room)} — ${esc(it.name)} ${tagLineType(it.lineType)}</li>`).join('')}</ol></div>`;
+}
+
+/* ============================== TAB: MATERIALS ============================== */
+/* Every Material line becomes a procurement row. Needed-by = the parent task's scheduled start
+   (materials must be on site before work begins). Track buy status here. */
+function materialLines(){
+  const {map}=computeSchedule();
+  const tasks=groupByTask(state.items); const tByLineId={};
+  tasks.forEach(t=>t.lines.forEach(l=>tByLineId[l.id]=t));
+  return state.items.filter(i=>i.lineType==='Material').map(m=>{
+    const t=tByLineId[m.id]; const s=t?map[t.taskId]:null;
+    const rate=m.costMethod==='rate'?getRate(m.rateKey):null;
+    return {line:m, task:t, needBy:s?s.start:null, qty:m.costMethod==='rate'?m.qty:null, unit:rate?rate.unit:'', cost:itemCost(m)};
+  });
+}
+function renderMaterialsTab(){
+  const q=state.searchQuery||'';
+  let rows=materialLines();
+  const filter=phaseFiltered(state.items).map(i=>i.id);
+  rows=rows.filter(r=>filter.includes(r.line.id));
+  if(q) rows=rows.filter(r=>[r.line.name,r.line.room,r.line.notes,(r.task&&r.task.category)].filter(Boolean).join(' ').toLowerCase().includes(q.toLowerCase()));
+  rows.sort((a,b)=>{ if(!a.needBy&&!b.needBy) return 0; if(!a.needBy) return 1; if(!b.needBy) return -1; return a.needBy-b.needBy; });
+
+  const total=rows.reduce((s,r)=>s+r.cost,0);
+  const toBuy=rows.filter(r=>r.line.buyStatus==='To buy'); const toBuyCost=toBuy.reduce((s,r)=>s+r.cost,0);
+  const ordered=rows.filter(r=>r.line.buyStatus==='Ordered').length;
+  const delivered=rows.filter(r=>r.line.buyStatus==='Delivered').length;
+
+  // group by week needed
+  const groups={}; rows.forEach(r=>{ const key=r.needBy?isoWeekKey(r.needBy):'zzz'; (groups[key]=groups[key]||[]).push(r); });
+  const keys=Object.keys(groups).sort();
+  const body=keys.map(k=>{
+    const label = k==='zzz'?'No scheduled date':('Buy for week of '+fmtDay(parseDate(k)));
+    const rws=groups[k].map(r=>{
+      const bs=r.line.buyStatus||'To buy';
+      const badgeCol = bs==='Delivered'?'var(--ok)':bs==='Ordered'?'var(--brand)':'var(--action-2)';
+      return `<tr>
+        <td>${r.needBy?`<span class="num" style="color:${r.needBy<new Date()?'var(--danger)':'inherit'}">${fmtDay(r.needBy)}</span>`:'—'}</td>
+        <td>${esc(r.line.name)}</td>
+        <td style="color:var(--ink-soft);">${esc(r.line.room)}</td>
+        <td class="num">${r.qty!=null?(r.qty+' '+esc(r.unit)):'—'}</td>
+        <td class="num">${fmt(r.cost)}</td>
+        <td><select style="color:${badgeCol};font-weight:600;" onchange="setBuyStatus('${r.line.id}',this.value)">${BUY_STATUSES.map(s=>`<option ${bs===s?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td><input type="text" value="${esc(r.line.notes||'')}" placeholder="vendor / note…" oninput="updateNotes('${r.line.id}',this.value)"></td>
+      </tr>`;
+    }).join('');
+    return `<tr class="grp"><td colspan="7">${label} · ${fmt(groups[k].reduce((s,r)=>s+r.cost,0))}</td></tr>${rws}`;
+  }).join('') || `<tr><td colspan="7"><div class="empty">No material lines yet. Add a task with a material cost and it shows up here.</div></td></tr>`;
+
+  return `
+    <h1 class="page-h">Materials</h1>
+    <p class="page-sub">Everything you need to buy, ordered by when it's needed on site. "Buy for week of…" is set a task's start date — order a little earlier to be safe. Mark items ordered or delivered as you go.</p>
+    ${phaseFilterChips()}
+    <div class="statrow">
+      <div class="stat"><div class="k">Material budget</div><div class="v">${fmt(total)}</div></div>
+      <div class="stat"><div class="k">Still to buy</div><div class="v sm">${fmt(toBuyCost)}</div><div class="note">${toBuy.length} item${toBuy.length===1?'':'s'}</div></div>
+      <div class="stat"><div class="k">Ordered</div><div class="v sm">${ordered}</div></div>
+      <div class="stat"><div class="k">Delivered</div><div class="v sm">${delivered}</div></div>
+    </div>
+    <div class="row" style="margin-bottom:10px;justify-content:flex-end;">${searchBox('Search materials…')}</div>
+    <table class="dt"><thead><tr><th>Need by</th><th>Material</th><th>Room</th><th>Qty</th><th style="text-align:right;">Est. cost</th><th>Status</th><th>Vendor / note</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+function setBuyStatus(id,v){ const it=getItem(id); if(!it) return; it.buyStatus=v; persist(); renderMain(); }
+
+/* ============================== TAB: ESTIMATE ============================== */
+function groupSums(items,fn){ const m={}; items.forEach(i=>{const k=fn(i); m[k]=(m[k]||0)+itemCost(i);}); return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
+function barRows(pairs,total,colorFn){
+  const max=Math.max(1,...pairs.map(p=>p[1]));
+  return pairs.map(([label,val])=>`<div class="bar-row"><div>${esc(label)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2,val/max*100)}%;background:${colorFn?colorFn(label):'var(--brand)'};"></div></div><div class="bar-val">${fmt(val)}</div></div>`).join('')||'<div class="empty">No items yet</div>';
+}
+function renderEstimateTab(){
+  const q=state.searchQuery||'';
+  const items=phaseFiltered(state.items);
+  const total=grandTotal(items), mand=grandTotal(items.filter(i=>i.mandatory)), opt=grandTotal(items.filter(i=>!i.mandatory));
+  const matTotal=grandTotal(items.filter(i=>i.lineType==='Material'));
+  const byRoom=groupSums(items,i=>i.room);
+  const byTrade=groupSums(items,i=>tradeBucket(i.workerType||i.category).name);
+  const byPhase=groupSums(items,i=>(getPhase(i.phase)||{}).label||'Unassigned');
+
+  function taskRow(task){
+    const chev=task.isSplit?`<button class="iconbtn" onclick="toggleExpand('${task.taskId}')">${expandedTasks.has(task.taskId)?'▾':'▸'}</button>`:`<span style="display:inline-block;width:22px;"></span>`;
+    const typeCell=task.isSplit?`${tagLineType('Material')} ${tagLineType('Labor')}`:tagLineType(task.lines[0].lineType);
+    const trade=task.isSplit?'<span class="badge">Material + labour</span>':`<span class="badge">${esc(task.lines[0].workerType||'—')}</span>`;
+    let html=`<tr><td>${esc(task.room)}</td><td>${chev}${esc(task.name)}</td><td>${typeCell}</td><td>${trade}</td><td class="num">${fmt(task.totalCost)}</td></tr>`;
+    if(task.isSplit&&expandedTasks.has(task.taskId)) html+=task.lines.map(l=>`<tr style="background:var(--surface-2);"><td></td><td style="padding-left:30px;font-size:12px;">${esc(l.name)}</td><td>${tagLineType(l.lineType)}</td><td><span class="badge">${esc(l.workerType||'—')}</span></td><td class="num" style="font-size:12px;">${fmt(itemCost(l))}</td></tr>`).join('');
+    return html;
+  }
+  let list=groupByTask(items); if(q) list=list.filter(t=>matchesSearch(t,q));
+  const taskRows=[...list].sort((a,b)=>b.totalCost-a.totalCost).map(taskRow).join('')||`<tr><td colspan="5"><div class="empty">No line items match.</div></td></tr>`;
+
+  return `
+    <h1 class="page-h">Estimate</h1>
+    <p class="page-sub">Rate-based tasks recompute the instant you change a rate in Setup. Flat/quoted amounts stay fixed. Use the phase filter to price just what you're doing now.</p>
+    ${phaseFilterChips()}
+    <div class="statrow">
+      <div class="stat"><div class="k">Grand total</div><div class="v">${fmt(total)}</div></div>
+      <div class="stat"><div class="k">Mandatory</div><div class="v sm">${fmt(mand)}</div></div>
+      <div class="stat"><div class="k">Optional</div><div class="v sm">${fmt(opt)}</div></div>
+      <div class="stat"><div class="k">Materials</div><div class="v sm">${fmt(matTotal)}</div></div>
+    </div>
+    <div class="sect">Cost by room</div>${barRows(byRoom,total)}
+    <div class="sect">Cost by trade</div>${barRows(byTrade,total,(l)=>tradeColor(tradeBucket(l).key))}
+    <div class="sect">Cost by phase</div>${barRows(byPhase,total)}
+    <div class="row between" style="margin-top:24px;margin-bottom:10px;"><div class="sect" style="margin:0;">All tasks</div>${searchBox('Search tasks…')}</div>
+    <table class="dt"><thead><tr><th>Room</th><th>Task</th><th>Type</th><th>Trade</th><th style="text-align:right;">Cost</th></tr></thead><tbody>${taskRows}</tbody></table>`;
+}
+
+/* ============================== TAB: TRACK ============================== */
+function renderTrackTab(){
+  const q=state.searchQuery||'';
+  const items=phaseFiltered(state.items);
+  const done=items.filter(i=>i.status==='Done').length;
+  const pct=items.length?Math.round(done/items.length*100):0;
+  const est=grandTotal(items);
+  const actual=items.reduce((s,i)=>s+(i.actualCost!=null?Number(i.actualCost):0),0);
+  const ac=items.filter(i=>i.actualCost!=null).length;
+
+  function taskRow(task){
+    const chev=task.isSplit?`<button class="iconbtn" onclick="toggleExpand('${task.taskId}')">${expandedTasks.has(task.taskId)?'▾':'▸'}</button>`:`<span style="display:inline-block;width:22px;"></span>`;
+    const tActual=task.lines.reduce((s,l)=>s+(l.actualCost!=null?Number(l.actualCost):0),0);
+    const anyA=task.lines.some(l=>l.actualCost!=null);
+    const sumStatus=task.lines.every(l=>l.status==='Done')?'Done':task.lines.some(l=>l.status==='In Progress')?'In Progress':task.lines.every(l=>l.status==='On Hold')?'On Hold':'Not Started';
+    const actualCell=task.isSplit?`<span class="num">${anyA?fmt(tActual):'—'}</span>`:`<input type="number" placeholder="—" value="${task.lines[0].actualCost!=null?task.lines[0].actualCost:''}" style="width:96px;text-align:right;" oninput="updateActualCost('${task.lines[0].id}',this.value)">`;
+    const statusCell=task.isSplit?`<span class="badge">${sumStatus}</span>`:`<select onchange="updateStatus('${task.lines[0].id}',this.value)">${STATUSES.map(s=>`<option ${task.lines[0].status===s?'selected':''}>${s}</option>`).join('')}</select>`;
+    const notesCell=task.isSplit?`<span style="color:var(--ink-soft);font-size:12px;">expand to edit</span>`:`<input type="text" value="${esc(task.lines[0].notes||'')}" placeholder="Notes…" oninput="updateNotes('${task.lines[0].id}',this.value)">`;
+    let html=`<tr><td>${esc(task.room)}</td><td>${chev}${esc(task.name)}${task.isSplit?' <span style="font-size:10px;color:var(--ink-faint);">(Mat+Lab)</span>':''}</td><td><span class="badge">${task.isSplit?'Multiple':esc(task.lines[0].workerType||'—')}</span></td><td class="num">${fmt(task.totalCost)}</td><td>${actualCell}</td><td>${statusCell}</td><td>${notesCell}</td></tr>`;
+    if(task.isSplit&&expandedTasks.has(task.taskId)) html+=task.lines.map(l=>`<tr style="background:var(--surface-2);"><td></td><td style="padding-left:30px;font-size:12px;">${tagLineType(l.lineType)}</td><td><span class="badge">${esc(l.workerType||'—')}</span></td><td class="num" style="font-size:12px;">${fmt(itemCost(l))}</td><td><input type="number" placeholder="—" value="${l.actualCost!=null?l.actualCost:''}" style="width:96px;text-align:right;" oninput="updateActualCost('${l.id}',this.value)"></td><td><select onchange="updateStatus('${l.id}',this.value)">${STATUSES.map(s=>`<option ${l.status===s?'selected':''}>${s}</option>`).join('')}</select></td><td><input type="text" value="${esc(l.notes||'')}" placeholder="Notes…" oninput="updateNotes('${l.id}',this.value)"></td></tr>`).join('');
+    return html;
+  }
+  let list=groupByTask(items); if(q) list=list.filter(t=>matchesSearch(t,q));
+  const rows=list.map(taskRow).join('')||`<tr><td colspan="7"><div class="empty">No tasks match.</div></td></tr>`;
+
+  return `
+    <h1 class="page-h">Track</h1>
+    <p class="page-sub">As work happens on site, log status and what you actually spent against the estimate. Split tasks show a combined figure — expand to log material and labour separately.</p>
+    ${phaseFilterChips()}
+    <div class="statrow">
+      <div class="stat"><div class="k">Progress</div><div class="v">${pct}%</div><div class="note">${done} / ${items.length} lines done</div></div>
+      <div class="stat"><div class="k">Estimated</div><div class="v sm">${fmt(est)}</div></div>
+      <div class="stat"><div class="k">Actual so far</div><div class="v sm">${fmt(actual)}</div><div class="note">${ac} logged</div></div>
+      <div class="stat"><div class="k">Variance</div><div class="v sm" style="color:${actual>est&&ac>0?'var(--danger)':'var(--ok)'};">${ac?fmt(actual-est):'—'}</div></div>
+    </div>
+    <div class="row" style="margin-bottom:10px;justify-content:flex-end;">${searchBox('Search tasks…')}</div>
+    <table class="dt"><thead><tr><th>Room</th><th>Task</th><th>Trade</th><th style="text-align:right;">Est.</th><th>Actual ₹</th><th>Status</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function updateActualCost(id,val){ const it=getItem(id); if(!it) return; it.actualCost=val===''?null:Number(val); persist();
+  const items=state.items; const actual=items.reduce((s,i)=>s+(i.actualCost!=null?Number(i.actualCost):0),0); const est=grandTotal(items);
+  const cards=document.querySelectorAll('#main .stat .v'); if(cards[2])cards[2].textContent=fmt(actual); if(cards[3])cards[3].textContent=items.some(i=>i.actualCost!=null)?fmt(actual-est):'—';
+}
+function updateStatus(id,val){ const it=getItem(id); if(!it) return; it.status=val; persist(); renderMain(); }
+function updateNotes(id,val){ const it=getItem(id); if(!it) return; it.notes=val; persist(); }
+
+/* ============================== TASK MODAL ============================== */
+function blankLine(lineType, workerType){
+  return { id:null, lineType, workerType:workerType||'', costMethod:'custom',
+    rateKey: state.rates[0]?state.rates[0].key:'', qty:0, customAmount:0,
+    dependsOn:[], status:'Not Started', actualCost:null, notes:'', buyStatus:'To buy' };
+}
+function cloneLine(item){
+  return { id:item.id, lineType:item.lineType, workerType:item.workerType, costMethod:item.costMethod,
+    rateKey:item.rateKey, qty:item.qty, customAmount:item.customAmount,
+    dependsOn:[...(item.dependsOn||[])], status:item.status, actualCost:item.actualCost,
+    notes:item.notes||'', buyStatus:item.buyStatus||'To buy' };
+}
+
+function openTaskModal(taskId, presetPhase, presetStage){
+  draftIsNew=!taskId;
+  if(!taskId){
+    draftTask={ taskId:uid('task'), room:state.rooms[0]||'', name:'', category:'Carpentry',
+      phase: presetPhase!=null?presetPhase:(state.phases[0]?state.phases[0].id:1),
+      stageId: presetStage!=null?presetStage:null, mandatory:true, isSplit:false,
+      durationDays: CATEGORY_DURATION['Carpentry']||2, startOverride:null,
+      single:blankLine('Inclusive', tradeFor('Carpentry','Inclusive')),
+      material:blankLine('Material','Material'),
+      labor:blankLine('Labor', tradeFor('Carpentry','Labor')) };
+  } else {
+    const members=state.items.filter(i=>i.taskId===taskId);
+    const mat=members.find(m=>m.lineType==='Material'); const lab=members.find(m=>m.lineType==='Labor');
+    const isSplit=members.length===2&&!!mat&&!!lab; const primary=members[0]||{};
+    draftTask={ taskId, room:primary.room||state.rooms[0]||'', name:primary.name||'', category:primary.category||'Carpentry',
+      phase: primary.phase!=null?primary.phase:(state.phases[0]?state.phases[0].id:1),
+      stageId: primary.stageId!=null?primary.stageId:null, mandatory:primary.mandatory!==false, isSplit,
+      durationDays: primary.durationDays!=null?primary.durationDays:(CATEGORY_DURATION[primary.category]||2),
+      startOverride: primary.startOverride||null,
+      single:(!isSplit&&members[0])?cloneLine(members[0]):blankLine('Inclusive','Carpenter'),
+      material:mat?cloneLine(mat):blankLine('Material','Material'),
+      labor:lab?cloneLine(lab):blankLine('Labor', tradeFor(primary.category||'Carpentry','Labor')) };
+  }
+  document.addEventListener('keydown', handleModalKeydown, true);
+  renderModal();
+}
+function handleStageSelect(val){
+  if(val==='__new__'){ const label=prompt('New stage name:');
+    if(label&&label.trim()){ const stage={id:nextStageId(),label:label.trim()}; state.stages.push(stage); draftTask.stageId=stage.id; persist(); }
+  } else { draftTask.stageId= val===''?null:Number(val); }
+  renderModal();
+}
+function handlePhaseSelectInModal(val){ draftTask.phase=Number(val); renderModal(); }
+function closeModal(){ draftTask=null; document.removeEventListener('keydown', handleModalKeydown, true); document.getElementById('modalRoot').innerHTML=''; }
+
+function lineFieldsHTML(prefix, line, showDeps){
+  const rateOptions=state.rates.map(r=>`<option value="${r.key}" ${line.rateKey===r.key?'selected':''}>${esc(r.label)} (₹${r.value}/${esc(r.unit)})</option>`).join('');
+  const otherItems=state.items.filter(i=>i.taskId!==draftTask.taskId);
+  const depBoxes=otherItems.length?otherItems.map(d=>`
+    <label class="dep"><input type="checkbox" value="${d.id}" ${(line.dependsOn||[]).includes(d.id)?'checked':''} onchange="toggleDep('${prefix}','${d.id}',this.checked)"> ${esc(d.room)} — ${esc(d.name)} <span class="muted">(${d.lineType})</span></label>`).join('')
+    :'<div class="muted sm">No other items yet.</div>';
+  const isMat=line.lineType==='Material';
+  return `
+    <div class="frow">
+      <div class="fld"><label>Worker / Trade</label>
+        <input type="text" value="${esc(line.workerType)}" placeholder="e.g. Painter, Mason" oninput="draftTask.${prefix}.workerType=this.value"></div>
+      <div class="fld"><label>Status</label>
+        <select onchange="draftTask.${prefix}.status=this.value">${STATUSES.map(s=>`<option ${line.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <div class="fld"><label>Costing method</label>
+      <div class="radios">
+        <label><input type="radio" name="cm_${prefix}" ${line.costMethod==='rate'?'checked':''} onchange="draftTask.${prefix}.costMethod='rate';renderModal();"> Rate card × quantity</label>
+        <label><input type="radio" name="cm_${prefix}" ${line.costMethod==='custom'?'checked':''} onchange="draftTask.${prefix}.costMethod='custom';renderModal();"> Flat / quoted amount</label>
+      </div></div>
+    ${line.costMethod==='rate'?`
+    <div class="frow">
+      <div class="fld"><label>Rate</label><select onchange="draftTask.${prefix}.rateKey=this.value;updatePreview();">${rateOptions}</select></div>
+      <div class="fld"><label>Quantity</label><input type="number" value="${line.qty}" oninput="draftTask.${prefix}.qty=Number(this.value);updatePreview();"></div>
+    </div>`:`
+    <div class="fld"><label>Amount (₹)</label><input type="number" value="${line.customAmount}" oninput="draftTask.${prefix}.customAmount=Number(this.value);updatePreview();"></div>`}
+    ${isMat?`<div class="fld"><label>Procurement status</label>
+      <select onchange="draftTask.${prefix}.buyStatus=this.value">${BUY_STATUSES.map(b=>`<option ${line.buyStatus===b?'selected':''}>${b}</option>`).join('')}</select></div>`:''}
+    ${showDeps?`<div class="fld"><label>Depends on (must finish first)</label><div class="deplist">${depBoxes}</div></div>`:''}
+    <div class="frow">
+      <div class="fld"><label>Actual cost (₹, optional)</label>
+        <input type="number" value="${line.actualCost!=null?line.actualCost:''}" oninput="draftTask.${prefix}.actualCost=this.value===''?null:Number(this.value)"></div>
+      <div class="fld"><label>Notes</label><input type="text" value="${esc(line.notes||'')}" oninput="draftTask.${prefix}.notes=this.value"></div>
+    </div>`;
+}
+
+function renderModal(){
+  const root=document.getElementById('modalRoot');
+  if(!draftTask){ root.innerHTML=''; return; }
+  const t=draftTask;
+  const roomOptions=state.rooms.map(r=>`<option ${t.room===r?'selected':''}>${esc(r)}</option>`).join('');
+  const catOptions=CATEGORIES.map(c=>`<option ${t.category===c?'selected':''}>${esc(c)}</option>`).join('');
+  const phaseOptions=state.phases.map(p=>`<option value="${p.id}" ${t.phase===p.id?'selected':''}>${esc(p.label)}</option>`).join('');
+  const cost=t.isSplit?(itemCost(t.material)+itemCost(t.labor)):itemCost(t.single);
+  const dot=`<span class="tdot" style="background:${tradeColor(tradeBucket(tradeFor(t.category, t.isSplit?'Labor':t.single.lineType)))}"></span>`;
+
+  root.innerHTML=`
+  <div class="overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-head"><h2>${dot}${draftIsNew?'Add task':'Edit task'}</h2>
+        <button class="iconbtn" onclick="closeModal()" title="Close">✕</button></div>
+      <div class="modal-body">
+        <div class="frow">
+          <div class="fld"><label>Room / Area</label><select onchange="draftTask.room=this.value">${roomOptions}</select></div>
+          <div class="fld"><label>Category</label><select onchange="handleCategoryChange(this.value)">${catOptions}</select></div>
+        </div>
+        <div class="fld"><label>Task name</label>
+          <input type="text" id="itemNameInput" value="${esc(t.name)}" placeholder="e.g. Re-tile bathroom wall" oninput="draftTask.name=this.value"></div>
+        <div class="fld"><label>Structure</label>
+          <div class="radios">
+            <label><input type="radio" name="split" ${!t.isSplit?'checked':''} onchange="setStructure(false)"> Single line</label>
+            <label><input type="radio" name="split" ${t.isSplit?'checked':''} onchange="setStructure(true)"> Material + Labour (together)</label>
+          </div></div>
+        <div class="frow">
+          <div class="fld"><label>Stage (execution order)</label>
+            <select onchange="handleStageSelect(this.value)">
+              <option value="" ${t.stageId==null?'selected':''}>— No stage —</option>
+              ${state.stages.map(s=>`<option value="${s.id}" ${t.stageId===s.id?'selected':''}>${esc(s.label)}</option>`).join('')}
+              <option value="__new__">+ New stage…</option>
+            </select></div>
+          <div class="fld"><label>Phase</label><select onchange="handlePhaseSelectInModal(this.value)">${phaseOptions}</select></div>
+          <div class="fld"><label>Flag</label>
+            <select onchange="draftTask.mandatory=(this.value==='m')">
+              <option value="m" ${t.mandatory?'selected':''}>Mandatory</option>
+              <option value="o" ${!t.mandatory?'selected':''}>Optional</option>
+            </select></div>
+        </div>
+        <div class="frow">
+          <div class="fld"><label>Duration (working days)</label>
+            <input type="number" min="1" value="${t.durationDays||1}" oninput="draftTask.durationDays=Math.max(1,Number(this.value)||1)"></div>
+          <div class="fld"><label>Fixed start date (optional)</label>
+            <input type="date" value="${t.startOverride||''}" oninput="draftTask.startOverride=this.value||null">
+            <div class="muted sm">Leave blank to auto-schedule from stage &amp; dependencies.</div></div>
+        </div>
+        ${t.isSplit?`
+          <div class="sec-title">${tagLineType('Material')}</div>
+          ${lineFieldsHTML('material',t.material,false)}
+          <div class="sec-title">${tagLineType('Labor')}</div>
+          ${lineFieldsHTML('labor',t.labor,true)}
+        `:`
+          <div class="fld"><label>Line type</label>
+            <div class="radios">${LINE_TYPES.map(lt=>`<label><input type="radio" name="lt" value="${lt}" ${t.single.lineType===lt?'checked':''} onchange="setSingleLineType('${lt}')"> ${lt}</label>`).join('')}</div></div>
+          ${lineFieldsHTML('single',t.single,true)}
+        `}
+      </div>
+      <div class="modal-footer">
+        <div>Cost: <span class="preview-cost" id="previewCost">${fmt(cost)}</span></div>
+        <div class="row">
+          ${!draftIsNew?`<button class="btn-danger" onclick="deleteTask('${t.taskId}');closeModal();">Delete</button>`:''}
+          <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" onclick="saveDraftTask()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  const nameEl=document.getElementById('itemNameInput');
+  if(nameEl&&draftIsNew&&!t.name){ nameEl.focus(); }
+}
+function handleModalKeydown(ev){
+  if(!draftTask) return;
+  if(ev.key==='Escape'){ ev.preventDefault(); closeModal(); return; }
+  if(ev.key==='Enter'){ const tag=(ev.target&&ev.target.tagName||'').toLowerCase();
+    if(tag==='textarea') return; ev.preventDefault(); saveDraftTask(); }
+}
+function setStructure(isSplit){ draftTask.isSplit=isSplit; applyCategoryTrades(); renderModal(); }
+function setSingleLineType(lt){ draftTask.single.lineType=lt; draftTask.single.workerType=tradeFor(draftTask.category,lt); renderModal(); }
+function handleCategoryChange(cat){ draftTask.category=cat; draftTask.durationDays=CATEGORY_DURATION[cat]||draftTask.durationDays||2; applyCategoryTrades(); renderModal(); }
+function applyCategoryTrades(){ const t=draftTask;
+  if(t.isSplit){ t.material.workerType='Material'; t.labor.workerType=tradeFor(t.category,'Labor'); }
+  else { t.single.workerType=tradeFor(t.category,t.single.lineType); } }
+function updatePreview(){ const el=document.getElementById('previewCost'); if(!el) return; const t=draftTask;
+  el.textContent=fmt(t.isSplit?(itemCost(t.material)+itemCost(t.labor)):itemCost(t.single)); }
+function toggleDep(which, depId, checked){ const line=draftTask[which]; const cur=new Set(line.dependsOn||[]);
+  if(checked)cur.add(depId); else cur.delete(depId); line.dependsOn=[...cur]; }
+
+function saveDraftTask(){
+  const t=draftTask;
+  if(!t.name||!t.name.trim()){ alert('Give the task a name first.'); return; }
+  const shared={ room:t.room, name:t.name.trim(), category:t.category, phase:t.phase, stageId:t.stageId,
+    mandatory:t.mandatory, taskId:t.taskId, durationDays:Math.max(1,Number(t.durationDays)||1), startOverride:t.startOverride||null };
+  let newLines;
+  if(t.isSplit){
+    const matId=t.material.id||uid('item'); const labId=t.labor.id||uid('item');
+    newLines=[ Object.assign({},shared,t.material,{id:matId,lineType:'Material'}),
+      Object.assign({},shared,t.labor,{id:labId,lineType:'Labor'}) ];
+  } else {
+    const sId=t.single.id||uid('item');
+    newLines=[ Object.assign({},shared,t.single,{id:sId}) ];
+  }
+  const oldMemberIds=state.items.filter(i=>i.taskId===t.taskId).map(i=>i.id);
+  const newIds=new Set(newLines.map(l=>l.id));
+  const droppedIds=oldMemberIds.filter(id=>!newIds.has(id));
+  const others=state.items.filter(i=>i.taskId!==t.taskId).map(i=>droppedIds.length?Object.assign({},i,{dependsOn:(i.dependsOn||[]).filter(d=>!droppedIds.includes(d))}):i);
+  const prospective=[...others,...newLines];
+  for(const line of newLines){
+    if(line.dependsOn&&line.dependsOn.length&&wouldCreateCycle(line.id,line.dependsOn,prospective)){
+      alert(`The "${line.lineType}" line has a circular dependency — please review before saving.`); return; }
+  }
+  state.items=prospective; persist(); closeModal(); renderAll();
+}
+function deleteTask(taskId){
+  const members=state.items.filter(i=>i.taskId===taskId);
+  if(!members.length) return;
+  const label=members[0].room+' — '+members[0].name;
+  if(!confirm(`Delete "${label}"${members.length>1?' (both Material and Labour lines)':''}? This also removes it from any dependency lists.`)) return;
+  const ids=members.map(m=>m.id);
+  state.items=state.items.filter(i=>i.taskId!==taskId);
+  state.items.forEach(i=>{ i.dependsOn=(i.dependsOn||[]).filter(d=>!ids.includes(d)); });
+  persist(); renderAll();
+}
+
+/* ============================== TEMPLATE PICKER ============================== */
+function openTemplatePicker(presetStage){
+  const root=document.getElementById('modalRoot');
+  const tpls=TEMPLATES();
+  const cards=tpls.map((tp,i)=>{
+    const trade=tradeFor(tp.category, tp.split?'Labor':(tp.single||'Inclusive'));
+    const col=tradeColor(tradeBucket(trade));
+    const struct=tp.split?'Material + Labour':(tp.flat?'Flat amount':'Rate × qty');
+    return `<button class="tpl-card" onclick="pickTemplate(${i}, ${presetStage!=null?presetStage:'null'})">
+      <span class="tdot" style="background:${col}"></span>
+      <span class="tpl-name">${esc(tp.name)}</span>
+      <span class="tpl-meta">${esc(tp.category)} · ${struct}</span></button>`;
+  }).join('');
+  root.innerHTML=`
+  <div class="overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal modal-sm">
+      <div class="modal-head"><h2>Start from a template</h2>
+        <button class="iconbtn" onclick="closeModal()" title="Close">✕</button></div>
+      <div class="modal-body">
+        <p class="muted sm" style="margin:0 0 12px;">Pick a common job to prefill category, trade, structure and a starting rate. You can adjust everything before saving.</p>
+        <div class="tpl-grid">${cards}</div>
+      </div>
+      <div class="modal-footer">
+        <div class="muted sm">or</div>
+        <button class="btn-ghost" onclick="closeModal();openTaskModal(null${presetStage!=null?','+'null,'+presetStage:''})">Start blank instead</button>
+      </div>
+    </div>
+  </div>`;
+}
+function pickTemplate(i, presetStage){
+  const tp=TEMPLATES()[i];
+  openTaskModal(null, null, presetStage!=null?presetStage:null);
+  const t=draftTask;
+  t.name=tp.name; t.category=tp.category;
+  t.durationDays=CATEGORY_DURATION[tp.category]||2;
+  if(tp.split){
+    t.isSplit=true;
+    t.material=blankLine('Material','Material');
+    t.labor=blankLine('Labor', tradeFor(tp.category,'Labor'));
+    if(tp.mat){ t.material.costMethod='rate'; t.material.rateKey=tp.mat; }
+    if(tp.lab){ t.labor.costMethod='rate'; t.labor.rateKey=tp.lab; }
+  } else {
+    t.isSplit=false;
+    t.single=blankLine(tp.single||'Inclusive', tradeFor(tp.category, tp.single||'Inclusive'));
+    if(tp.rate){ t.single.costMethod='rate'; t.single.rateKey=tp.rate; }
+    else if(tp.flat){ t.single.costMethod='custom'; }
+  }
+  renderModal();
+}
+
+/* ============================== SETUP TAB (the "common place") ============================== */
+function renderSetupTab(){
+  const ps=state.projectStart||defaultProjectStart();
+  const roomRows=state.rooms.map((r,i)=>{
+    const inUse=state.items.filter(it=>it.room===r).length;
+    return `<tr>
+      <td><input type="text" value="${esc(r)}" onchange="renameRoom(${i},this.value)"></td>
+      <td class="num muted">${inUse} task${inUse===1?'':'s'}</td>
+      <td style="text-align:right;"><button class="iconbtn danger" title="Remove" onclick="removeRoom(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  const rateRows=state.rates.map(r=>{
+    const inUse=state.items.filter(it=>it.costMethod==='rate'&&it.rateKey===r.key).length;
+    return `<tr>
+      <td>${esc(r.label)}</td>
+      <td class="muted">${esc(r.unit)}</td>
+      <td><div class="rate-in">₹<input type="number" value="${r.value}" oninput="updateRate('${r.key}',this.value)"></div></td>
+      <td class="num muted">${inUse}</td>
+      <td style="text-align:right;"><button class="iconbtn danger" title="Delete" onclick="deleteRate('${r.key}')">✕</button></td>
+    </tr>`;
+  }).join('');
+  const phaseRows=state.phases.map((p,i)=>{
+    const inUse=state.items.filter(it=>it.phase===p.id).length;
+    return `<tr>
+      <td><span class="ord-btns">
+        <button class="iconbtn" ${i===0?'disabled':''} onclick="movePhase(${i},-1)" title="Up">▲</button>
+        <button class="iconbtn" ${i===state.phases.length-1?'disabled':''} onclick="movePhase(${i},1)" title="Down">▼</button></span></td>
+      <td><input type="text" value="${esc(p.label)}" onchange="renamePhaseInline(${p.id},this.value)"></td>
+      <td class="num muted">${inUse}</td>
+      <td style="text-align:right;"><button class="iconbtn danger" title="Remove" onclick="removePhase(${p.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+  const stageRows=state.stages.map((s,i)=>{
+    const inUse=state.items.filter(it=>it.stageId===s.id).length;
+    const col=tradeColor(tradeBucket(''));
+    return `<tr>
+      <td><span class="ord-btns">
+        <button class="iconbtn" ${i===0?'disabled':''} onclick="moveStage(${i},-1)" title="Up">▲</button>
+        <button class="iconbtn" ${i===state.stages.length-1?'disabled':''} onclick="moveStage(${i},1)" title="Down">▼</button></span></td>
+      <td class="num muted">${i+1}</td>
+      <td><input type="text" value="${esc(s.label)}" onchange="renameStageInline(${s.id},this.value)"></td>
+      <td class="num muted">${inUse}</td>
+      <td style="text-align:right;"><button class="iconbtn danger" title="Remove" onclick="removeStage(${s.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <h1 class="page-h">Setup</h1>
+    <p class="page-sub">Set your start date and manage the building blocks every other tab reuses — rooms, your rate card, phases and the stage order. Change a rate here once and every estimate updates.</p>
+
+    <div class="setup-grid">
+      <section class="card">
+        <div class="sec-title">Project timing</div>
+        <div class="frow">
+          <div class="fld"><label>Project start date</label>
+            <input type="date" value="${ps}" onchange="setProjectStart(this.value)"></div>
+          <div class="fld"><label>Weekends</label>
+            <label class="chkline"><input type="checkbox" ${state.workWeekends?'checked':''} onchange="toggleWeekends(this.checked)"> Work on weekends too</label></div>
+        </div>
+        <p class="muted sm" style="margin:6px 0 0;">The schedule counts working days from here. Turn on weekends if your crew works 7 days.</p>
+      </section>
+
+      <section class="card">
+        <div class="sec-title">Rooms / areas</div>
+        <table class="dt compact"><thead><tr><th>Name</th><th>Used by</th><th></th></tr></thead>
+          <tbody>${roomRows||'<tr><td colspan="3"><div class="empty">No rooms yet.</div></td></tr>'}</tbody></table>
+        <button class="btn-ghost btn-sm" onclick="promptAddRoom()">+ Add room</button>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="sec-title">Rate card <span class="muted sm" style="font-weight:400;">— the common place for prices</span></div>
+      <table class="dt compact"><thead><tr><th>Rate</th><th>Unit</th><th>₹ / unit</th><th>Used by</th><th></th></tr></thead>
+        <tbody>${rateRows}</tbody></table>
+      <button class="btn-ghost btn-sm" onclick="addRate()">+ Add rate</button>
+    </section>
+
+    <div class="setup-grid">
+      <section class="card">
+        <div class="sec-title">Phases <span class="muted sm" style="font-weight:400;">— now / next / later</span></div>
+        <table class="dt compact"><thead><tr><th>Order</th><th>Name</th><th>Tasks</th><th></th></tr></thead>
+          <tbody>${phaseRows}</tbody></table>
+        <button class="btn-ghost btn-sm" onclick="addPhase()">+ Add phase</button>
+      </section>
+
+      <section class="card">
+        <div class="sec-title">Stages <span class="muted sm" style="font-weight:400;">— trade execution order</span></div>
+        <table class="dt compact"><thead><tr><th>Move</th><th>#</th><th>Name</th><th>Tasks</th><th></th></tr></thead>
+          <tbody>${stageRows}</tbody></table>
+        <button class="btn-ghost btn-sm" onclick="addStage()">+ Add stage</button>
+      </section>
+    </div>`;
+}
+
+/* rooms */
+function renameRoom(idx, val){
+  const t=(val||'').trim(); if(!t) return;
+  const old=state.rooms[idx]; if(t===old) return;
+  if(state.rooms.includes(t)){ alert('That room already exists.'); renderMain(); return; }
+  state.rooms[idx]=t;
+  state.items.forEach(i=>{ if(i.room===old) i.room=t; });
+  if(state.planRoomFilter===old) state.planRoomFilter=t;
+  persist(); renderMain();
+}
+function removeRoom(idx){
+  const room=state.rooms[idx]; const inUse=state.items.filter(i=>i.room===room).length;
+  if(inUse){ alert(`"${room}" is used by ${inUse} task(s). Move or delete those first.`); return; }
+  if(!confirm(`Remove "${room}"?`)) return;
+  state.rooms.splice(idx,1);
+  if(state.planRoomFilter===room) state.planRoomFilter='All';
+  persist(); renderMain();
+}
+/* rates */
+function updateRate(key, value){ const r=getRate(key); if(!r) return; r.value=Number(value)||0; schedCache=null; persist();
+  const items=phaseFiltered(state.items); /* live-patch estimate not needed on setup */ }
+function addRate(){
+  const label=prompt('New rate name (e.g. "Waterproofing — sqft"):'); if(!label) return;
+  const unit=prompt('Unit (sqft / running ft / point / fixture / lumpsum):','sqft')||'sqft';
+  const value=Number(prompt('₹ per unit:','0'))||0;
+  state.rates.push({key:uid('rate'),label,unit,value}); persist(); renderMain();
+}
+function deleteRate(key){
+  const inUse=state.items.some(i=>i.costMethod==='rate'&&i.rateKey===key);
+  if(inUse&&!confirm('Some tasks use this rate — deleting it will zero their cost until you fix them. Continue?')) return;
+  state.rates=state.rates.filter(r=>r.key!==key); persist(); renderMain();
+}
+/* phases */
+function addPhase(){ const label=prompt('New phase name (e.g. "Phase 4" or "Someday"):'); if(!label||!label.trim()) return;
+  state.phases.push({id:nextPhaseId(),label:label.trim()}); persist(); renderMain(); }
+function renamePhaseInline(id, val){ const ph=getPhase(id); if(!ph) return; const t=(val||'').trim(); if(!t){ renderMain(); return; } ph.label=t; persist(); renderMain(); }
+function removePhase(id){
+  if(state.phases.length<=1){ alert('You need at least one phase.'); return; }
+  const inUse=state.items.filter(i=>i.phase===id).length; const fallback=state.phases.find(p=>p.id!==id);
+  if(inUse&&!confirm(`${inUse} task(s) use this phase — they'll move to "${fallback.label}". Continue?`)) return;
+  state.items.forEach(i=>{ if(i.phase===id) i.phase=fallback.id; });
+  state.phases=state.phases.filter(p=>p.id!==id);
+  if(state.phaseFilter===id) state.phaseFilter='All';
+  persist(); renderMain();
+}
+function movePhase(idx, dir){ const j=idx+dir; if(j<0||j>=state.phases.length) return;
+  const a=state.phases; [a[idx],a[j]]=[a[j],a[idx]]; persist(); renderMain(); }
+/* stages */
+function renameStageInline(id, val){ const s=getStage(id); if(!s) return; const t=(val||'').trim(); if(!t){ renderMain(); return; } s.label=t; persist(); renderMain(); }
+function moveStage(idx, dir){ const j=idx+dir; if(j<0||j>=state.stages.length) return;
+  const a=state.stages; [a[idx],a[j]]=[a[j],a[idx]]; schedCache=null; persist(); renderMain(); }
+
+/* ============================== EXCEL EXPORT ============================== */
+function exportXLSX(){
+  const items=state.items;
+  const wb=XLSX.utils.book_new();
+  const depTag=x=>x.room+' - '+x.name+' ['+x.lineType+']';
+  const {map}=computeSchedule();
+  const taskByLineId={}; groupByTask(items).forEach(t=>t.lines.forEach(l=>taskByLineId[l.id]=t));
+  const startFor=it=>{ const t=taskByLineId[it.id]; const s=t?map[t.taskId]:null; return s?isoDate(s.start):''; };
+  const endFor=it=>{ const t=taskByLineId[it.id]; const s=t?map[t.taskId]:null; return s?isoDate(s.end):''; };
+
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+    [{Setting:'Project start', Value:state.projectStart||''},
+     {Setting:'Work weekends', Value:state.workWeekends?'Yes':'No'},
+     {Setting:'Cascade stages', Value:state.sequenceStages?'Yes':'No'}]), 'Project');
+
+  const rateSheet=state.rates.map(r=>({Rate:r.label, Unit:r.unit, 'Rate (INR)':r.value}));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rateSheet), 'Rate Card');
+
+  // master lists so empty phases/stages survive a round-trip, keeping their order
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+    state.phases.map((p,i)=>({Order:i+1, Phase:p.label}))), 'Phases');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+    state.stages.map((s,i)=>({Order:i+1, Stage:s.label}))), 'Stages');
+
+  const itemSheet=items.map(it=>({
+    Room:it.room, Item:it.name, Category:it.category, 'Line Type':it.lineType,
+    'Worker/Trade':it.workerType, 'Mandatory/Optional':it.mandatory?'Mandatory':'Optional',
+    'Costing Method':it.costMethod==='rate'?'Rate x Qty':'Flat Amount',
+    'Rate Used':it.costMethod==='rate'?((getRate(it.rateKey)||{}).label||''):'',
+    Quantity:it.costMethod==='rate'?it.qty:'',
+    'Est. Cost (INR)':itemCost(it),
+    Stage:(getStage(it.stageId)||{}).label||'',
+    Phase:(getPhase(it.phase)||{}).label||'',
+    'Duration (days)':it.durationDays!=null?it.durationDays:'',
+    'Fixed Start':it.startOverride||'',
+    'Buy Status':it.lineType==='Material'?(it.buyStatus||'To buy'):'',
+    'Depends On':(it.dependsOn||[]).map(d=>{const x=getItem(d);return x?depTag(x):'';}).filter(Boolean).join('; '),
+    Status:it.status, 'Actual Cost (INR)':it.actualCost!=null?it.actualCost:'', Notes:it.notes||'',
+    'Task ID':it.taskId||it.id,
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemSheet), 'Rooms & Items');
+
+  const schedSheet=[...items].sort((a,b)=>{
+      const sa=taskByLineId[a.id], sb=taskByLineId[b.id];
+      const da=sa?map[sa.taskId].start:0, db=sb?map[sb.taskId].start:0;
+      return da-db || stageOrder(a.stageId)-stageOrder(b.stageId);
+    }).map(it=>({
+      Start:startFor(it), End:endFor(it),
+      Stage:(getStage(it.stageId)||{}).label||'', Phase:(getPhase(it.phase)||{}).label||'',
+      Room:it.room, Item:it.name, 'Line Type':it.lineType, Trade:it.workerType,
+      'Duration (days)':it.durationDays!=null?it.durationDays:'',
+      'Depends On':(it.dependsOn||[]).map(d=>{const x=getItem(d);return x?depTag(x):'';}).filter(Boolean).join('; ')
+    }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(schedSheet), 'Schedule');
+
+  const matSheet=materialLines()
+    .sort((a,b)=>{ if(!a.needBy&&!b.needBy)return 0; if(!a.needBy)return 1; if(!b.needBy)return -1; return a.needBy-b.needBy; })
+    .map(r=>({ 'Need By':r.needBy?isoDate(r.needBy):'', Material:r.line.name, Room:r.line.room,
+      Quantity:r.qty!=null?r.qty:'', Unit:r.unit||'', 'Est. Cost (INR)':r.cost,
+      'Buy Status':r.line.buyStatus||'To buy', 'Vendor / Note':r.line.notes||'' }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(matSheet.length?matSheet:[{'Need By':'',Material:'(no material lines)'}]), 'Materials');
+
+  const order=suggestedOrder().map((it,idx)=>({Step:idx+1, Room:it.room, Item:it.name, 'Line Type':it.lineType}));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(order), 'Suggested Order');
+
+  const byRoom=groupSums(items,i=>i.room);
+  const byTrade=groupSums(items,i=>i.workerType||'—');
+  const byPhase=groupSums(items,i=>(getPhase(i.phase)||{}).label||'Unassigned');
+  const summarySheet=[
+    {Section:'GRAND TOTAL', Key:'', 'Amount (INR)':grandTotal(items)},
+    {Section:'Mandatory vs Optional', Key:'Mandatory', 'Amount (INR)':grandTotal(items.filter(i=>i.mandatory))},
+    {Section:'', Key:'Optional', 'Amount (INR)':grandTotal(items.filter(i=>!i.mandatory))},
+    {Section:'', Key:'Materials', 'Amount (INR)':grandTotal(items.filter(i=>i.lineType==='Material'))},
+    ...byRoom.map(([k,v])=>({Section:'By Room', Key:k, 'Amount (INR)':v})),
+    ...byTrade.map(([k,v])=>({Section:'By Trade', Key:k, 'Amount (INR)':v})),
+    ...byPhase.map(([k,v])=>({Section:'By Phase', Key:k, 'Amount (INR)':v})),
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summarySheet), 'Estimate Summary');
+
+  const trackSheet=items.map(it=>({ Room:it.room, Item:it.name, Trade:it.workerType, 'Est. Cost (INR)':itemCost(it),
+    'Actual Cost (INR)':it.actualCost!=null?it.actualCost:'', Status:it.status, Notes:it.notes||'' }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(trackSheet), 'Track');
+
+  XLSX.writeFile(wb, 'Home_Renovation_Plan.xlsx');
+}
+
+/* ============================== EXCEL IMPORT (backward compatible) ============================== */
+function handleImportFile(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{ try{ const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}); importFromWorkbook(wb); }
+    catch(err){ alert('Could not read that as an Excel workbook. Use a .xlsx exported from this planner (or edited from one).\n\n'+err.message); } };
+  reader.onerror=()=>alert('Could not read that file.');
+  reader.readAsArrayBuffer(file);
+}
+function stripStageNum(s){ return String(s||'').replace(/^\s*\d+\s*[·.\-]\s*/,'').trim(); }
+function importFromWorkbook(wb){
+  const itemsSheetName=wb.SheetNames.find(n=>n==='Rooms & Items')||wb.SheetNames[0];
+  const rateSheetName=wb.SheetNames.find(n=>n==='Rate Card');
+  if(!wb.Sheets[itemsSheetName]){ alert('No "Rooms & Items" sheet found — nothing to import.'); return; }
+  const itemRows=XLSX.utils.sheet_to_json(wb.Sheets[itemsSheetName],{defval:''});
+  if(!itemRows.length){ alert('That sheet has no rows to import.'); return; }
+  if(!confirm(`Import ${itemRows.length} item(s)? This REPLACES everything currently in the planner. Export first if you want to keep the current plan.`)) return;
+
+  const headers=Object.keys(itemRows[0]);
+  const hasStageCol=headers.includes('Stage');
+  const hasBatchCol=headers.includes('Trade Batch');
+  const isOld=!hasStageCol; // old exports had no clean Stage column
+
+  // rates
+  const newRates=[]; const rateKeyByLabel={};
+  if(rateSheetName&&wb.Sheets[rateSheetName]){
+    XLSX.utils.sheet_to_json(wb.Sheets[rateSheetName],{defval:''}).forEach(r=>{
+      const label=String(r['Rate']||'').trim(); if(!label) return;
+      const key=uid('rate'); newRates.push({key,label,unit:String(r['Unit']||'sqft').trim(),value:Number(r['Rate (INR)'])||0}); rateKeyByLabel[label]=key;
+    });
+  }
+  if(!newRates.length) newRates.push(...defaultRates());
+
+  // stage label per row (new: Stage col; old: Trade Batch, else stripped Phase)
+  const rowStage=row=> hasStageCol ? String(row['Stage']||'').trim()
+    : (hasBatchCol && String(row['Trade Batch']||'').trim()) ? String(row['Trade Batch']||'').trim()
+    : stripStageNum(row['Phase']);
+
+  // build stage list in schedule order if available
+  const schedName=wb.SheetNames.find(n=>n==='Schedule');
+  const orderSource=(schedName&&wb.Sheets[schedName])?XLSX.utils.sheet_to_json(wb.Sheets[schedName],{defval:''}):itemRows;
+  const newStages=[]; const stageIdByLabel={};
+  // prefer an explicit Stages master sheet (keeps order + empty stages)
+  const stagesSheet=wb.SheetNames.find(n=>n==='Stages');
+  if(stagesSheet&&wb.Sheets[stagesSheet]){
+    XLSX.utils.sheet_to_json(wb.Sheets[stagesSheet],{defval:''}).forEach(r=>{ const label=String(r['Stage']||'').trim();
+      if(!label||stageIdByLabel[label]!=null) return; const id=newStages.length+1; newStages.push({id,label}); stageIdByLabel[label]=id; });
+  }
+  orderSource.forEach(row=>{ const label=rowStage(row); if(!label||stageIdByLabel[label]!=null) return;
+    const id=newStages.length+1; newStages.push({id,label}); stageIdByLabel[label]=id; });
+
+  // phases: prefer explicit Phases master sheet; else new files derive from item labels; old files reset to defaults by mandatory
+  const newPhases=[]; const phaseIdByLabel={};
+  const phasesSheet=wb.SheetNames.find(n=>n==='Phases');
+  if(phasesSheet&&wb.Sheets[phasesSheet]){
+    XLSX.utils.sheet_to_json(wb.Sheets[phasesSheet],{defval:''}).forEach(r=>{ const label=String(r['Phase']||'').trim();
+      if(!label||phaseIdByLabel[label]!=null) return; const id=newPhases.length+1; newPhases.push({id,label}); phaseIdByLabel[label]=id; });
+  } else if(!isOld){
+    orderSource.forEach(row=>{ const label=String(row['Phase']||'').trim(); if(!label||phaseIdByLabel[label]!=null) return;
+      const id=newPhases.length+1; newPhases.push({id,label}); phaseIdByLabel[label]=id; });
+  }
+  if(!newPhases.length) newPhases.push(...defaultPhases());
+  const phase1=newPhases[0].id, phaseLast=newPhases[newPhases.length-1].id;
+
+  const newRooms=[]; const newItems=[]; const lookupByTag={};
+  itemRows.forEach(row=>{
+    const room=String(row['Room']||'').trim()||'Unassigned'; if(!newRooms.includes(room)) newRooms.push(room);
+    const name=String(row['Item']||'').trim()||'Untitled item';
+    const lineType=LINE_TYPES.includes(row['Line Type'])?row['Line Type']:'Inclusive';
+    const isRate=String(row['Costing Method']||'').toLowerCase().indexOf('rate')===0;
+    const estCost=Number(row['Est. Cost (INR)'])||0;
+    const rateKey=isRate?(rateKeyByLabel[String(row['Rate Used']||'').trim()]||''):'';
+    const category=String(row['Category']||'Other').trim()||'Other';
+    const mandatory=String(row['Mandatory/Optional']||'Mandatory').trim().toLowerCase()!=='optional';
+    let itemPhase;
+    if(isOld){ itemPhase=mandatory?phase1:phaseLast; }
+    else { const pl=String(row['Phase']||'').trim(); itemPhase=phaseIdByLabel[pl]!=null?phaseIdByLabel[pl]:phase1; }
+    const stageLabel=rowStage(row);
+    const statusVal=STATUSES.includes(row['Status'])?row['Status']:'Not Started';
+    const actualRaw=row['Actual Cost (INR)'];
+    const durRaw=row['Duration (days)']!==undefined?row['Duration (days)']:row['Duration Days'];
+    const buyRaw=String(row['Buy Status']||'').trim();
+    const item={
+      id:uid('item'), taskId:String(row['Task ID']||'').trim()||null, room, name, category, lineType,
+      workerType:String(row['Worker/Trade']||'').trim(),
+      mandatory, phase:itemPhase,
+      stageId:(stageLabel&&stageIdByLabel[stageLabel]!=null)?stageIdByLabel[stageLabel]:null,
+      dependsOn:[],
+      costMethod:(isRate&&rateKey)?'rate':'custom',
+      rateKey:(isRate&&rateKey)?rateKey:(newRates[0]?newRates[0].key:''),
+      qty:isRate?(Number(row['Quantity'])||0):0,
+      customAmount:(isRate&&rateKey)?0:estCost,
+      durationDays:(durRaw!==''&&durRaw!=null&&!isNaN(Number(durRaw)))?Number(durRaw):(CATEGORY_DURATION[category]||1),
+      startOverride:String(row['Fixed Start']||'').trim()||null,
+      buyStatus:BUY_STATUSES.includes(buyRaw)?buyRaw:'To buy',
+      status:statusVal, actualCost:(actualRaw===''||actualRaw==null)?null:Number(actualRaw), notes:String(row['Notes']||'').trim(),
+    };
+    newItems.push(item);
+    lookupByTag[room+' - '+name+' ['+lineType+']']=item.id;
+    item._depText=String(row['Depends On']||'');
+  });
+  newItems.forEach(item=>{ const text=item._depText||''; delete item._depText; if(!text.trim()) return;
+    text.split(';').map(s=>s.trim()).filter(Boolean).forEach(tag=>{ if(lookupByTag[tag]) item.dependsOn.push(lookupByTag[tag]); }); });
+  deriveTaskIds(newItems);
+  if(!newStages.length) newStages.push(...defaultStages());
+
+  // project settings sheet (new files)
+  let projectStart=defaultProjectStart(), workWeekends=false, sequenceStages=true;
+  const projName=wb.SheetNames.find(n=>n==='Project');
+  if(projName&&wb.Sheets[projName]){
+    XLSX.utils.sheet_to_json(wb.Sheets[projName],{defval:''}).forEach(r=>{
+      const k=String(r['Setting']||'').toLowerCase(), v=String(r['Value']||'').trim();
+      if(k.includes('start')&&/^\d{4}-\d\d-\d\d$/.test(v)) projectStart=v;
+      if(k.includes('weekend')) workWeekends=/^y/i.test(v);
+      if(k.includes('cascade')) sequenceStages=/^y/i.test(v);
+    });
+  }
+
+  state={ rates:newRates, rooms:newRooms.length?newRooms:defaultRooms(), phases:newPhases, stages:newStages, items:newItems,
+    projectStart, workWeekends, sequenceStages, scheduleView:'timeline',
+    activeTab:'tasks', planRoomFilter:'All', phaseFilter:'All', searchQuery:'' };
+  schedCache=null; persist(); renderAll();
+  alert(`Imported ${newItems.length} item(s) across ${newRooms.length} room(s)${isOld?' (older file — phases reset to Now/Next by mandatory flag, stages read from your trade batches)':''}.`);
+}
+
+/* ============================== INIT ============================== */
+loadState();
+
+</script>
+</body>
+</html>
